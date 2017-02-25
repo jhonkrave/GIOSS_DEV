@@ -67,7 +67,7 @@
                             <h3>Informacion de Entidad</h3>
                             <br>
                             <div class="form-group{{ $errors->has('codigo_entidad') ? ' has-error' : '' }}">
-                                <label for="codigo_entidad" class="col-md-4 control-label">Codigo de la Entidad</label>
+                                <label for="codigo_entidad" class="col-md-4 control-label">Codigo de la En</label>
 
                                 <div class="col-md-6">
                                     <input id="codigo_entidad" type="text" class="form-control" name="codigo_entidad" required>
