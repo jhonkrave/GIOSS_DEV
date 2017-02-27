@@ -15,9 +15,24 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/quienes', function () {
+    return view('welcome');
+});
+
+Route::get('/contactenos', function () {
+    return view('welcome');
+});
+
+Route::get('/resoluciones', function () {
+    return view('welcome');
+});
+
+
+
 Auth::routes();
 
 Route::get('/home', 'HomeController@index');
+
 //nombreclase::Funcion-Metodohttp ( 'nombreRuta','nombrecontrolador@funcion')
 
 //otra forma es con el metodo resource
