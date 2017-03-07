@@ -8,7 +8,10 @@ $(document).ready(function(){
 	});
 
 	$('#files_div').on('click','#close_div_file', function(){
-		$(this).parent().remove();
+		$(this).parent().fadeOut(function(){
+			$(this).remove();
+		});
+		
 	});
 
 	$('#btnUpload').on('click', function(){

@@ -13,7 +13,7 @@
         
         {{ Html::script(asset("js/jquery-3.1.0.min.js")) }}
         {{ Html::script(asset("css/bootstrap-3.3.7-dist/js/bootstrap.min.js")) }}
-        {{ Html::script(asset("js/menu.js")) }}
+        <!-- {{ Html::script(asset("js/menu.js")) }} -->
         <title>{{ config('app.name', 'Laravel') }}</title>
 
         <!-- Styles -->

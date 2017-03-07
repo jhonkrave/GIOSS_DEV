@@ -3,6 +3,10 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+
+use App\tipo_entidad;
+use App\User;
 
 class usersController extends Controller
 {
@@ -26,7 +30,7 @@ class usersController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
+    public function create(Request $data)
     {
         
     }
@@ -39,7 +43,18 @@ class usersController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        // $this->validate($request,[
+        //                        'name' =>'required',
+        //                         ]
+        //         );
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required | max: 255 |',
+        ]);
+
+        $validator->setAttributeNames(['name'=>'Nombres',]);
+        $validator->validate();
+
     }
 
     /**

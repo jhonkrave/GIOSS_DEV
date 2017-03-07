@@ -33,8 +33,9 @@ Auth::routes();
 
 Route::group(['middleware' => 'auth'], function(){
 	Route::get('/home', 'HomeController@index');
-	Route::get('/registro', 'usersController@register');
+	Route::resource('/registro', 'usersController');
 	Route::get('/upload_files', 'filesController@upload');
+	//Route::post('/registrar', 'usersController@create');
 });
 
 
