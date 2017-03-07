@@ -3,7 +3,7 @@
 <fieldset>
 
 <!-- Form Name -->
-<legend>Contact Us Today!</legend>
+<legend>Contactenos Ahora!</legend>
 
 <!-- Text input-->
 

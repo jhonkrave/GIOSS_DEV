@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.menu')
 
 @section('content')
 <div class="container">
@@ -7,18 +7,33 @@
             <div class="panel panel-default">
                 <div class="panel-heading">Registro</div>
                 <div class="panel-body">
+                    <!-- <form class="form-horizontal" role="form" method="POST" action="{{ route('register') }}"> -->
                     <form class="form-horizontal" role="form" method="POST" action="{{ route('register') }}">
                         {{ csrf_field() }}
                         <div class="row">
                             <h3>Informcación de Usuario</h3>
                             <br >
                             <div class="form-group{{ $errors->has('name') ? ' has-error' : '' }}">
-                                <label for="name" class="col-md-4 control-label">Name</label>
+                                <label for="name" class="col-md-4 control-label">Nombres</label>
 
                                 <div class="col-md-6">
                                     <input id="name" type="text" class="form-control" name="name" value="{{ old('name') }}" required autofocus>
 
                                     @if ($errors->has('name'))
+                                        <span class="help-block">
+                                            <strong>{{ $errors->first('name') }}</strong>
+                                        </span>
+                                    @endif
+                                </div>
+                            </div>
+
+                            <div class="form-group{{ $errors->has('name') ? ' has-error' : '' }}">
+                                <label for="name" class="col-md-4 control-label">Apellidos</label>
+
+                                <div class="col-md-6">
+                                    <input id="lastname" type="text" class="form-control" name="lastname" value="{{ old('name') }}" required autofocus>
+
+                                    @if ($errors->has('lastname'))
                                         <span class="help-block">
                                             <strong>{{ $errors->first('name') }}</strong>
                                         </span>
@@ -61,16 +76,34 @@
                                     <input id="password-confirm" type="password" class="form-control" name="password_confirmation" required>
                                 </div>
                             </div>
+
+                            <div class="form-group{{ $errors->has('tipo_usuario') ? ' has-error' : '' }}">
+                                <label for="tipo_usuario" class="col-md-4 control-label">Tipo de usuario</label>
+
+                                <div class="col-md-6">
+                                    <select id="tipo_usuario" class="form-control" required>
+                                        <option value="1">Administrador </option>
+                                        <option value="2"> Entidad</option>
+                                    </select> 
+
+                                    @if ($errors->has('tipo_usuario'))
+                                        <span class="help-block">
+                                            <strong>{{ $errors->first('tipo_usuario') }}</strong>
+                                        </span>
+                                    @endif
+                                </div>
+                            </div>
+
                         </div>
                         <hr>
-                        <div class="row">
+                        <div class="row" id="info_entidad" style="display:none;">
                             <h3>Informacion de Entidad</h3>
                             <br>
                             <div class="form-group{{ $errors->has('codigo_entidad') ? ' has-error' : '' }}">
                                 <label for="codigo_entidad" class="col-md-4 control-label">Codigo de la En</label>
 
                                 <div class="col-md-6">
-                                    <input id="codigo_entidad" type="text" class="form-control" name="codigo_entidad" required>
+                                    <input id="codigo_entidad" type="text" class="form-control" name="codigo_entidad" >
 
                                     @if ($errors->has('codigo_entidad'))
                                         <span class="help-block">
@@ -79,7 +112,7 @@
                                     @endif
                                 </div>
                             </div>
-                            <div class="form-group{{ $errors->has('codigo_entidad') ? ' has-error' : '' }}">
+                            <div class="form-group{{ $errors->has('tipo_entidad') ? ' has-error' : '' }}">
                                 <label for="tipo_entidad" class="col-md-4 control-label">Tipo Entidad</label>
 
                                 <div class="col-md-6">
@@ -98,7 +131,7 @@
                                 <label for="nombre_entidad" class="col-md-4 control-label">Nombre</label>
 
                                 <div class="col-md-6">
-                                    <input id="nombre_entidad" type="text" class="form-control" name="nombre_entidad" required>
+                                    <input id="nombre_entidad" type="text" class="form-control" name="nombre_entidad" >
 
                                     @if ($errors->has('nombre_entidad'))
                                         <span class="help-block">
@@ -137,4 +170,5 @@
         </div>
     </div>
 </div>
+{{ Html::script(asset("js/registro.js")) }}
 @endsection

@@ -74,7 +74,7 @@
 
     </head>
     <body>
-        <div class="flex-center position-ref full-height">
+        <div class="flex-center position-ref ">
             @if (Route::has('login'))
                 <div class="top-right links">
                     @if (Auth::check())
@@ -98,8 +98,9 @@
                 </div>
             </div>
         </div>    
-
-            <div class="" >
+        <br>
+        <br>
+            <div class="col-md-offset-2 col-md-8" >
             @if(Request::path() == 'quienes')
                  @include('layouts.quienes_somos')
             @endif

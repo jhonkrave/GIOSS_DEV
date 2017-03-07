@@ -31,7 +31,13 @@ Route::get('/resoluciones', function () {
 
 Auth::routes();
 
-Route::get('/home', 'HomeController@index');
+Route::group(['middleware' => 'auth'], function(){
+	Route::get('/home', 'HomeController@index');
+	Route::get('/registro', 'usersController@register');
+	Route::get('/upload_files', 'filesController@upload');
+});
+
+
 
 //nombreclase::Funcion-Metodohttp ( 'nombreRuta','nombrecontrolador@funcion')
 
