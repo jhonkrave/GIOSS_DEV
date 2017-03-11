@@ -163,6 +163,15 @@
                                     Register
                                 </button>
                             </div>
+                            @if(session()->has('success'))
+                                <div class="alert alert-success">
+                                <strong>Exito!</strong> {{session('success')}}
+                              </div>
+                            @elseif(session()->has('error'))
+                                <div class="alert alert-error">
+                                    <strong>Success!</strong> {{session('error')}}
+                                </div>
+                            @endif
                         </div>
                     </form>
                 </div>

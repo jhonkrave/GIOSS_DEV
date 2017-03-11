@@ -42,6 +42,6 @@ Route::group(['middleware' => 'auth'], function(){
 
 //nombreclase::Funcion-Metodohttp ( 'nombreRuta','nombrecontrolador@funcion')
 
-//otra forma es con el metodo resource
+//otra forma es con el metodo resource //name' => 'required | max: 255 |',
 Route::resource('/formulario', 'formulario');
 //Route::resource('url-defecto', 'nombre controlador')
