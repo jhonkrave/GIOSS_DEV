@@ -55,7 +55,7 @@
                                 </div>
                             </div>
 
-                            <div class="form-group{{ $errors->has('password') ? ' has-error' : '' }}">
+                            <!-- <div class="form-group{{ $errors->has('password') ? ' has-error' : '' }}">
                                 <label for="password" class="col-md-4 control-label">Password</label>
 
                                 <div class="col-md-6">
@@ -75,13 +75,13 @@
                                 <div class="col-md-6">
                                     <input id="password-confirm" type="password" class="form-control" name="password_confirmation" >
                                 </div>
-                            </div>
+                            </div> -->
 
                             <div class="form-group{{ $errors->has('tipo_usuario') ? ' has-error' : '' }}">
                                 <label for="tipo_usuario" class="col-md-4 control-label">Tipo de usuario</label>
 
                                 <div class="col-md-6">
-                                    <select id="tipo_usuario" class="form-control" required>
+                                    <select id="tipo_usuario" name="tipo_usuario" class="form-control" required>
                                         <option value="1">Administrador </option>
                                         <option value="2"> Entidad</option>
                                     </select> 
@@ -99,25 +99,18 @@
                         <div class="row" id="info_entidad" style="display:none;">
                             <h3>Informacion de Entidad</h3>
                             <br>
-                            <div class="form-group{{ $errors->has('codigo_entidad') ? ' has-error' : '' }}">
-                                <label for="codigo_entidad" class="col-md-4 control-label">Codigo de la En</label>
 
-                                <div class="col-md-6">
-                                    <input id="codigo_entidad" type="text" class="form-control" name="codigo_entidad" >
-
-                                    @if ($errors->has('codigo_entidad'))
-                                        <span class="help-block">
-                                            <strong>{{ $errors->first('codigo_entidad') }}</strong>
-                                        </span>
-                                    @endif
-                                </div>
-                            </div>
                             <div class="form-group{{ $errors->has('tipo_entidad') ? ' has-error' : '' }}">
-                                <label for="tipo_entidad" class="col-md-4 control-label">Tipo Entidad</label>
+                                <label for="tipo_entidad" class="col-md-4 control-label">Tipo de Identificación</label>
 
                                 <div class="col-md-6">
                                     <select id="tipo_entidad" class="form-control" name="tipo_entidad" required >
-                                        <option value="1">EPS</option>
+                                        @if(isset($tipo_entidades))
+                                            @foreach ($tipo_entidades as $tipo)
+                                                <option value="{{$tipo->codigo_tipo_entidad}}">{{$tipo->descripcion}}</option>    
+                                            @endforeach
+                                        @endif
+                                        
                                     </select>
 
                                     @if ($errors->has('tipo_entidad'))
@@ -127,6 +120,35 @@
                                     @endif
                                 </div>
                             </div>
+
+                            <div class="form-group{{ $errors->has('num_identificacion') ? ' has-error' : '' }}">
+                                <label for="num_identificacion" class="col-md-4 control-label"> Número de identificación</label>
+
+                                <div class="col-md-6">
+                                    <input id="num_identificacion" type="text" class="form-control" name="num_identificacion" >
+
+                                    @if ($errors->has('num_identificacion'))
+                                        <span class="help-block">
+                                            <strong>{{ $errors->first('num_identificacion') }}</strong>
+                                        </span>
+                                    @endif
+                                </div>
+                            </div>
+
+                            <div class="form-group{{ $errors->has('cod_habilitacion') ? ' has-error' : '' }}">
+                                <label for="cod_habilitacion" class="col-md-4 control-label"> Código de habilitación</label>
+
+                                <div class="col-md-6">
+                                    <input id="cod_habilitacion" type="text" class="form-control" name="cod_habilitacion" >
+
+                                    @if ($errors->has('cod_habilitacion'))
+                                        <span class="help-block">
+                                            <strong>{{ $errors->first('cod_habilitacion') }}</strong>
+                                        </span>
+                                    @endif
+                                </div>
+                            </div>
+                    
                             <div class="form-group{{ $errors->has('nombre_entidad') ? ' has-error' : '' }}">
                                 <label for="nombre_entidad" class="col-md-4 control-label">Nombre</label>
 
@@ -144,8 +166,13 @@
                                 <label for="cod_dept" class="col-md-4 control-label">Departamento</label>
 
                                 <div class="col-md-6">
-                                    <select id="cod_dept" class="form-control" name="cod_dept" required >
-                                        <option value="1">Cali</option>
+                                    <select id="cod_dept" class="form-control" name="cod_dept" >
+                                        @if(isset($departamentos))
+                                            @foreach($departamentos as $dep)
+                                                <option value="{{$dep->cod_divipola}}">{{$dep->cod_divipola}} - {{$dep->nombre}}</option>
+                                            @endforeach
+                                        @endif
+                                        
                                     </select>
 
                                     @if ($errors->has('cod_dept'))
@@ -155,7 +182,24 @@
                                     @endif
                                 </div>
                             </div>
+                            <div class="form-group{{ $errors->has('cod_muni') ? ' has-error' : '' }}">
+                                <label for="cod_muni" class="col-md-4 control-label">Municipio</label>
+
+                                <div class="col-md-6">
+                                    <select id="cod_muni" class="form-control" name="cod_muni"  >
+                                        
+                                    </select>
+
+                                    @if ($errors->has('cod_muni'))
+                                        <span class="help-block">
+                                            <strong>{{ $errors->first('cod_muni') }}</strong>
+                                        </span>
+                                    @endif
+                                </div>
+                            </div>
                         </div>
+
+
 
                         <div class="form-group">
                             <div class="col-md-6 col-md-offset-4">
@@ -163,6 +207,8 @@
                                     Register
                                 </button>
                             </div>
+                        </div>
+                        <div class="form-group">
                             @if(session()->has('success'))
                                 <div class="alert alert-success">
                                 <strong>Exito!</strong> {{session('success')}}
@@ -179,5 +225,8 @@
         </div>
     </div>
 </div>
+<script>
+    var routeGetMunicipios = "{{ route('getMunicipios') }}";
+</script>
 {{ Html::script(asset("js/registro.js")) }}
 @endsection

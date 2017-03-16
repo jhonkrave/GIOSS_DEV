@@ -17,15 +17,15 @@ class CreateUserEntidadsTable extends Migration
             $table->increments('id');
             $table->timestamps();
             $table->integer('userid');
-            $table->string('cod_entidad',12);
+            $table->integer('id_entidad');
             
             $table->foreign('userid')
                   ->references('id')->on('users')
                   ->onUpdate('cascade')
                   ->onDelete('no action');
 
-            $table->foreign('cod_entidad')
-                  ->references('codigo_entidad')->on('entidades_sector_salud')
+            $table->foreign('id_entidad')
+                  ->references('id_entidad')->on('entidades_sector_salud')
                   ->onUpdate('cascade')
                   ->onDelete('no action');
         });

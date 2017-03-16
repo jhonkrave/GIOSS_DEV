@@ -11,6 +11,10 @@ use Illuminate\Database\Eloquent\Model;
  */
 class tipo_entidad extends Model
 {
+    //para bloquear los campos timestamp
+    public $timestamps = false;
+    //para asignar primary key determinadad. Por dfecto la primerary key esla columna id
+    protected $primaryKey = 'codigo_tipo_entidad';
     /**
      * The table associated with the model.
      * 

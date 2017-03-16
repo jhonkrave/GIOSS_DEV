@@ -10,6 +10,10 @@ use Illuminate\Database\Eloquent\Model;
  */
 class consulta_homologo extends Model
 {
+
+    public $timestamps = false;
+    public $primaryKey  = 'cod_consulta';
+
     /**
      * The table associated with the model.
      * 

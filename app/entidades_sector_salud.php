@@ -5,20 +5,27 @@ namespace App;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * @property string $codigo_entidad
+ * @property integer $id_entidad
  * @property integer $cod_tipo_entidad
+ * @property integer $cod_mpio
  * @property string $nombre_de_la_entidad
- * @property string $codigo_dpto
- * @property string $cod_mpio
- * @property string $des_tipo_entidad_salud
- * @property string $numero_identificacion
- * @property string $digito_verificacion
+ * @property integer $num_identificacion
+ * @property integer $cod_habilitacion
  * @property TipoEntidad $tipoEntidad
+ * @property Municipio $municipio
+ * @property UserEntidad[] $userEntidads
  * @property Archivo[] $archivos
  * @property DIdentificacionUsrIp[] $dIdentificacionUsrIps
  */
 class entidades_sector_salud extends Model
 {
+    /**
+    * primary key    
+    */
+
+
+    protected $primaryKey = 'id_entidad';
+    public $timestamps = false;
     /**
      * The table associated with the model.
      * 
@@ -29,7 +36,7 @@ class entidades_sector_salud extends Model
     /**
      * @var array
      */
-    protected $fillable = ['cod_tipo_entidad', 'nombre_de_la_entidad', 'codigo_dpto', 'cod_mpio', 'des_tipo_entidad_salud', 'numero_identificacion', 'digito_verificacion'];
+    protected $fillable = ['cod_tipo_entidad', 'cod_mpio', 'nombre_de_la_entidad', 'num_identificacion', 'cod_habilitacion'];
 
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
@@ -40,11 +47,27 @@ class entidades_sector_salud extends Model
     }
 
     /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function municipio()
+    {
+        return $this->belongsTo('App\Municipio', 'cod_mpio', 'cod_divipola');
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function userEntidads()
+    {
+        return $this->hasMany('App\UserEntidad', 'id_entidad', 'id_entidad');
+    }
+
+    /**
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function archivos()
     {
-        return $this->hasMany('App\Archivo', 'cod_ident_entidad', 'codigo_entidad');
+        return $this->hasMany('App\Archivo', 'id_entidad', 'id_entidad');
     }
 
     /**
@@ -52,6 +75,6 @@ class entidades_sector_salud extends Model
      */
     public function dIdentificacionUsrIps()
     {
-        return $this->hasMany('App\DIdentificacionUsrIp', 'cod_prestador_servicios_salud', 'codigo_entidad');
+        return $this->hasMany('App\DIdentificacionUsrIp', 'cod_prestador_servicios_salud', 'id_entidad');
     }
 }

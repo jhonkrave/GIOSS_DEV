@@ -19,7 +19,7 @@
         <!-- Styles -->
         <!-- <link href="{{ asset('css/app.css') }}" rel="stylesheet">  -->
         {{ Html::style(asset("css/bootstrap-3.3.7-dist/css/bootstrap.min.css")) }}
-        {{ Html::style(asset("css/font-awesome.min.css")) }}
+        {{ Html::style(asset("css/font-awesome.css")) }}
         {{ Html::style(asset("css/menu.css")) }}
         <!-- Scripts -->
             

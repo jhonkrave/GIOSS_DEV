@@ -22,3 +22,14 @@ $factory->define(App\User::class, function (Faker\Generator $faker) {
         'remember_token' => str_random(10),
     ];
 });
+
+
+//seeder para tipo entidad
+$factory->define(App\tipo_entidad::class, function (Faker\Generator $faker) {
+    return [
+        'codigo_tipo_entidad' => $faker->unique()->randomDigit,
+        'descripcion' => $faker->sentence(2),
+    ];
+});
+
+

@@ -31,10 +31,16 @@ Route::get('/resoluciones', function () {
 
 Auth::routes();
 
+
 Route::group(['middleware' => 'auth'], function(){
 	Route::get('/home', 'HomeController@index');
 	Route::resource('/registro', 'usersController');
 	Route::get('/upload_files', 'filesController@upload');
+	//Route::post('/registrar', 'usersController@create');
+});
+
+Route::group(['middleware' => 'admin'], function(){
+	Route::name('getMunicipios')->get('/departamento/getmunicipio', 'DepartamentoController@getMunicipios');
 	//Route::post('/registrar', 'usersController@create');
 });
 

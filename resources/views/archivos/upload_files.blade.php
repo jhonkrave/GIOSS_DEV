@@ -13,7 +13,7 @@
                     <form id="cargaArchivos" role="form">
                         <div class="row form-group">
                             <h3>Periodo de tiempo</h3>
-                            <p>Por favor digite el periodo de tiempo</p>
+                            <p>Por favor señale el periodo de tiempo</p>
                         </div>
                         <div class="row">
                             <div class="col-md-4 form-group">
@@ -23,9 +23,9 @@
                                 </div>
                             </div>
                             <div class="col-md-4 form-group">
-                                <label for="fecha_ini" class="form-control-label">Hasta:</label>
+                                <label for="fecha_fin" class="form-control-label">Hasta:</label>
                                 <div>
-                                    <input type="date" name="fecha_ini" id="fecha_ini">
+                                    <input type="date" name="fecha_fin" id="fecha_fin">
                                 </div>
                             </div>
                         </div>
@@ -38,9 +38,11 @@
                             </button>
                             <br>
                             <br>
-                            <div id="alert" style="display:none;">
-                                <div class="alert alert-danger">
-                                  <strong>Error!</strong> Error al cargar los archivos
+                            <div id="alert" class="form-group " style="display:none;" align="center">
+                                <div class="alert alert-danger" style="width: 700px; height: 150px; overflow-y: scroll;">
+                                    <h4><strong>Error al cargar los archivos!</strong></h4>
+                                    <div id="error_area" style="text-align: left;"></div>
+                                  
                                 </div>
                             </div>
                             
