@@ -42,7 +42,8 @@ class filesController extends Controller
     public function store(Request $request)
     {
         $files = $request->file('archivo');
-        //dd($files);
+        $file_types = $request->tipo_file;
+
         $count = 0;
         $routeFile = null;
         // $name = $files->getClientOriginalName();
@@ -54,12 +55,14 @@ class filesController extends Controller
           $validator->validate();
           $name = '/'.$count.'/'.$file->getClientOriginalName();
 
-          $routeFile =  Storage::disk('archivos')->put($name, \File::get($file));
+          Storage::disk('archivos')->put($name, \File::get($file));
+          $routeFile = Storage::disk('archivos')->url($name);
+            $routeFile = fopen(storage_path('archivos').$name, 'r');
           $count++;
           
         }
         if ($routeFile != null){
-            echo json_encode('funciona');
+            echo json_encode('si');
         }else{
             echo json_encode('NO');
         }
