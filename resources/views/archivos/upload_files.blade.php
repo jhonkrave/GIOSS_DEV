@@ -11,6 +11,7 @@
 
                 <div class="panel-body">
                     <form id="cargaArchivos" role="form">
+                        {{ csrf_field() }}
                         <div class="row form-group">
                             <h3>Periodo de tiempo</h3>
                             <p>Por favor señale el periodo de tiempo</p>
@@ -55,5 +56,8 @@
         </div>
     </div>
 </div>
+<script>
+    var route = "{{ route('uploading') }}";
+</script>
 {{ Html::script(asset("js/uploadfiles.js")) }}
 @endsection

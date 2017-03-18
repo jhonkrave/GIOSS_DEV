@@ -36,6 +36,7 @@ Route::group(['middleware' => 'auth'], function(){
 	Route::get('/home', 'HomeController@index');
 	Route::resource('/registro', 'usersController');
 	Route::get('/upload_files', 'filesController@upload');
+	Route::name('uploading')->post('/upload_files','filesController@store');
 	//Route::post('/registrar', 'usersController@create');
 });
 

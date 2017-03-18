@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
 class filesController extends Controller
 {
@@ -41,17 +42,29 @@ class filesController extends Controller
     public function store(Request $request)
     {
         $files = $request->file('archivo');
+        //dd($files);
         $count = 0;
+        $routeFile = null;
+        // $name = $files->getClientOriginalName();
+
+        // $routeFile =  Storage::disk('archivos')->put($name, \File::get($files));
         foreach($files as $file) {
           $rules = array('file' => 'required'); //'required|mimes:png,gif,jpeg,txt,pdf,doc'
           $validator = Validator::make(array('file'=> $file), $rules);
           $validator->validate();
-          $name = $file->getClientOriginalName();
+          $name = '/'.$count.'/'.$file->getClientOriginalName();
 
-          Storage::disk('archivos/'.$count.'/')->put($name, \File::get($file));
-          $cout++;
+          $routeFile =  Storage::disk('archivos')->put($name, \File::get($file));
+          $count++;
           
         }
+        if ($routeFile != null){
+            echo json_encode('funciona');
+        }else{
+            echo json_encode('NO');
+        }
+
+        
 
     }
 

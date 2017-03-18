@@ -36,9 +36,7 @@ $(document).ready(function(){
 			
 			$('#alert').fadeIn();
 		}else{
-			$('#alert').fadeOut();
-			var data = $('#cargaArchivos').serializeArray();
-			console.log(data);
+			uploadFile();
 		}
 
 		//
@@ -51,14 +49,14 @@ function validatePeriodo(){
 	var detalle = '<hr><hr><strong>Error en el periodo a reportar</strong><br>';
 	var startDt=$('#fecha_ini').val();
 	var endDt=$('#fecha_fin').val();
-
+	console.log(startDt);
 	if(startDt == "" ){
-		var isValid = false;
+		 isValid = false;
 		detalle += '<p>- Por favor selecciona una fecha inicio de periodo valida.</p>';
 	}
 
 	if(endDt == "" ){
-		var isValid = false;
+		isValid = false;
 		 detalle += '<p>- Por favor selecciona una fecha de fin de periodo valida.</p>';
 	}
 
@@ -147,6 +145,30 @@ function validateNameFiles(){
 				mnj += '<p>- la seccion del tipo de integificacion debe ser un caracter de tamaño 3</p>';
 			}
 
+			
+
+			// var dateini = fecha_ini.substring(0,4)+'-'+fecha_ini.substring(4,6)+'-'+fecha_ini.substring(6);
+			// var datefin = fecha_fin.substring(0,4)+'-'+fecha_fin.substring(4,6)+'-'+fecha_fin.substring(6);
+			// var mesr = MesRepor.substring(0,4)+'-'+MesRepor.substring(4,6)+'-01';
+			// console.log(dateini);
+			// console.log(datefin);
+			// console.log(mesr);
+
+			// var startDt=$('#fecha_ini').val();
+			// var endDt=$('#fecha_fin').val();
+
+			// if(startDt != dateini)
+			// {
+			//      isValid = false;
+			// 	 mnj += '<p>- El periodo incial debe ser equivalente con el periodo inial del archivo reportado</p>';
+			// }
+
+			// if(endDt != datefin)
+			// {
+			//     isValid = false;
+			// 	 mnj += '<p>- El periodo final debe ser equivalente con el periodo final del archivo reportado</p></p>';
+			// }
+
 			if(!isValid){
 				mnj = '<hr>Error en el archivo <strong>'+ label+'</strong>:<br>'+mnj;
 			}
@@ -161,4 +183,38 @@ function validateNameFiles(){
 
 	return {'isValid': isValid, 'detalle':detalle};
 
+}
+
+function uploadFile() {
+    
+    
+    var formData = new FormData($('#cargaArchivos')[0]);
+    
+    formData.append('periodo_ini',$('#fecha_ini').val());
+    formData.append('periodo_fin', $('#fecha_fin').val());
+    
+
+    
+    $.ajax({
+        url: route,
+        data: formData,
+        type: 'POST',
+        dataType: 'json',
+        cache: false,
+        // parametros necesarios para la carga de archivos
+        contentType: false,
+        processData: false,
+        beforeSend: function() {
+           
+        },
+        success : function (msj) {
+             
+            console.log(msj);
+        },
+        error: function (msj) {
+            console.log(msj);
+        }
+        // ... Other options like success and etc
+    });
+     
 }
