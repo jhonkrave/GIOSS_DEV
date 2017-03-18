@@ -14,7 +14,7 @@ class DatabaseSeeder extends Seeder
     {
     	Model::unguard();
         $this->call(UserAdministratorSeeder::class);
-        $this->call(DBtipoEntidadSeeder::class);
+        //$this->call(DBtipoEntidadSeeder::class);
         $this->call(DbRolesSeeder::class);
 	    //$this->call(DBconsulta_homologoSeeder::class);
 
