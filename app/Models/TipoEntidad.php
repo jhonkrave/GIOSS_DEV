@@ -11,7 +11,7 @@ class TipoEntidad extends Model
 {
     protected $table = 'tipo_entidad';
 
-    protected $primaryKey = 'codigo_tipo_entidad';
+    protected $primaryKey = 'id_tipo_ent';
 
 	public $timestamps = false;
 

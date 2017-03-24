@@ -1,0 +1,7 @@
+﻿"No. línea archivo original"|"No. linea en archivo de errores"|Campo|Detalle
+1|1|1|"El campo debe ser valor numérico de 12 dígitos"
+1|1|2|"El campo debe terner un logitud igual a 1"
+1|1|3|"El campo debe terner un logitud igual a 1"
+1|1|4|"El campo debe ser un valor numérico igual de 12 dígitos"
+1|1|5|"El campo no debe ser nulo"
+1|1|6|"El campo no debe ser nulo"

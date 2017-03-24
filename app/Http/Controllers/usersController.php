@@ -9,11 +9,11 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Auth\SendsPasswordResetEmails;
 use Illuminate\Support\Facades\Password;
 
-use App\tipo_entidad;
+use App\Models\TipoEntidad;
 use App\User;
-use App\entidades_sector_salud;
-use App\departamento;
-use App\user_entidad;
+use App\Models\EntidadesSectorSalud;
+use App\Models\Departamento;
+use App\Models\UserEntidad;
 
 class usersController extends Controller
 {
@@ -31,8 +31,8 @@ class usersController extends Controller
      */
     public function index()
     {
-        $departamentos = departamento::orderBy('nombre', 'asc')->get();
-        $tipo_entidades = tipo_entidad::all();
+        $departamentos = Departamento::orderBy('nombre', 'asc')->get();
+        $tipo_entidades = TipoEntidad::all();
         return view('auth.register')->with(['departamentos' => $departamentos,'tipo_entidades' =>$tipo_entidades]);
     }
 
@@ -116,7 +116,7 @@ class usersController extends Controller
                 $validator->validate();
 
                 //se crea la entidad
-                $newEntidad =  new entidades_sector_salud();
+                $newEntidad =  new EntidadesSectorSalud();
                 
                 $newEntidad->cod_tipo_entidad = $request->tipo_entidad;
                 $newEntidad->nombre_de_la_entidad = $request->nombre_entidad;
@@ -129,7 +129,7 @@ class usersController extends Controller
                 
 
                 //se crea la relacion usuario - entidad
-                $newRelation = new user_entidad();
+                $newRelation = new UserEntidad();
                 $newRelation->id_entidad = $newEntidad->id_entidad;
                 $newRelation->userid = $newUser->id;
 

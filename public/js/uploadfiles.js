@@ -5,7 +5,7 @@ $(document).ready(function(){
 		$('#alert').fadeOut();
 		count_files+=1;
 
-		var html = '<div class="form-group well col-md-6" id="particular_file_div"> <button type="button" id="close_div_file" class="close" aria-hidden="true">&times;</button> <label for="tipo_file" class="form-control-label">Tipo de archivo No.'+count_files+'</label><select id="tipo_file" name="tipo_file[]"><option value="ACC">Archivo Atencion en Consulta</option> <option value="AEH" >Archivo Egresos Hospitalarios AEH</option value="AMS"><option>Archivo Medicamentos Suministrados AMS</option><option value="AVA">Archivo Vacunas Aplicadas AVA</option><option value="APS">Archivo Procedimientos APS</option></select><div><input type="file" name="archivo[]" id="archivo"  accept=".txt"></div></div>';
+		var html = '<div class="form-group well col-md-6" id="particular_file_div"> <button type="button" id="close_div_file" class="close" aria-hidden="true">&times;</button> <label for="tipo_file" class="form-control-label">Tipo de archivo No.'+count_files+'</label><select id="tipo_file" name="tipo_file[]"><option value="AAC">Archivo Atencion en Consulta AAC</option> <option value="AEH" >Archivo Egresos Hospitalarios AEH</option value="AMS"><option>Archivo Medicamentos Suministrados AMS</option><option value="AVA">Archivo Vacunas Aplicadas AVA</option><option value="APS">Archivo Procedimientos APS</option></select><div><input type="file" name="archivo[]" id="archivo"  accept=".txt"></div></div>';
 		$('#files_div').append(html);
 	});
 
@@ -142,7 +142,7 @@ function validateNameFiles(){
 
 			if(typeof tipo_identificaion != "string" || tipo_identificaion.length != 3 ){
 				isValid = false;
-				mnj += '<p>- la seccion del tipo de integificacion debe ser un caracter de tamaño 3</p>';
+				mnj += '<p>- la seccion del tipo de indentificacion debe ser un caracter de tamaño 3</p>';
 			}
 
 			
@@ -207,7 +207,22 @@ function uploadFile() {
            
         },
         success : function (msj) {
-             
+            $('#error_area').empty();
+
+            if (msj.error){
+
+            	$('#error_area').append(msj.error);
+            	$('#error_area').append(msj.urlzip);
+            	
+            }else if(msj.warning){
+            	$('#error_area').append(msj.warning);
+            	$('#error_area').append(msj.urlzip);
+            }else if(msj.success){
+            	$('#error_area').append(msj.success);
+            	$('#error_area').append(msj.urlzip);
+            	
+            }
+            $('#alert').fadeIn();
             console.log(msj);
         },
         error: function (msj) {

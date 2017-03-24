@@ -6,3 +6,5 @@
 Homestead.json
 Homestead.yaml
 .env
+/storage/archivos
+/public/zips/

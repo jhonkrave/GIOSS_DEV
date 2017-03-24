@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use App\Classes\AAC;
 
 class filesController extends Controller
 {
@@ -42,7 +43,7 @@ class filesController extends Controller
     public function store(Request $request)
     {
         $files = $request->file('archivo');
-        $file_types = $request->tipo_file;
+        $fileTypes = $request->tipo_file;
 
         $count = 0;
         $routeFile = null;
@@ -50,22 +51,44 @@ class filesController extends Controller
 
         // $routeFile =  Storage::disk('archivos')->put($name, \File::get($files));
         foreach($files as $file) {
-          $rules = array('file' => 'required'); //'required|mimes:png,gif,jpeg,txt,pdf,doc'
-          $validator = Validator::make(array('file'=> $file), $rules);
-          $validator->validate();
-          $name = '/'.$count.'/'.$file->getClientOriginalName();
+            $rules = array('file' => 'required'); //'required|mimes:png,gif,jpeg,txt,pdf,doc'
+            $validator = Validator::make(array('file'=> $file), $rules);
+            $validator->validate();
+            $folder = '/'.$fileTypes[$count].time().'/';
 
-          Storage::disk('archivos')->put($name, \File::get($file));
-          $routeFile = Storage::disk('archivos')->url($name);
-            $routeFile = fopen(storage_path('archivos').$name, 'r');
+            $routeFolder = storage_path('archivos').$folder;
+            $fileName = $folder.$file->getClientOriginalName();
+            $routeFile = $routeFolder.$file->getClientOriginalName();
+            Storage::disk('archivos')->put($fileName, \File::get($file));
+            
+            try {
+                switch ($fileTypes[$count]) {
+                    case 'AAC':
+                        $aac = new AAC($routeFolder,$routeFile);
+                        $aac->manageContent();
+                        break;
+                    
+                    default:
+                        # code...
+                        break;
+                }
+
+            } catch (\Exception $e) {
+                $response = new \stdClass();
+                $response->error = $e->getMessage();
+                echo $e;
+            }
+            
           $count++;
           
         }
-        if ($routeFile != null){
-            echo json_encode('si');
-        }else{
-            echo json_encode('NO');
-        }
+
+        // if ($routeFile != null){
+        //     echo json_encode('si');
+        // }else{
+        //     echo json_encode('NO');
+        // }
+        
 
         
 

@@ -14,7 +14,7 @@ class UserEntidad extends Model
     public $timestamps = true;
 
     protected $fillable = [
-        'userid',
+        'id_user',
         'id_entidad'
     ];
 

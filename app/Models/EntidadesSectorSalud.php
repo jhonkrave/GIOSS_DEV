@@ -16,11 +16,12 @@ class EntidadesSectorSalud extends Model
 	public $timestamps = false;
 
     protected $fillable = [
-        'cod_tipo_entidad',
-        'nombre_de_la_entidad',
-        'cod_mpio',
+        'tipo_entidad',
+        'tipo_identificacion',
         'num_identificacion',
-        'cod_habilitacion'
+        'cod_habilitacion',
+        'nombre',
+        'cod_mpio'
     ];
 
     protected $guarded = [];
