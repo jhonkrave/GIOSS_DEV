@@ -69,7 +69,8 @@ class filesController extends Controller
                         break;
                     
                     default:
-                        # code...
+                        $aac = new AAC($routeFolder,$routeFile);
+                        $aac->manageContent();
                         break;
                 }
 
