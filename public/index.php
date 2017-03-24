@@ -47,6 +47,15 @@ $app = require_once __DIR__.'/../bootstrap/app.php';
 |
 */
 
+/*
+
+permisos:
+chmod -R o+w laravel54/storage
+sudo chmod 755 -R laravel54/
+
+
+*/
+
 $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
 
 $response = $kernel->handle(

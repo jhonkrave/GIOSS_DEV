@@ -5,19 +5,16 @@
     "license": "MIT",
     "type": "project",
     "require": {
-        "php": ">=5.6.3",
-        "illuminate/html": "^5.0",
+        "php": ">=5.6.4",
         "laravel/framework": "5.4.*",
         "laravel/tinker": "~1.0",
-        "reliese/laravel": "^0.0.13",
-        "laravelcollective/html": "5.*"
+        "laravelcollective/html": "^5.3.0"
     },
     "require-dev": {
         "fzaninotto/faker": "~1.4",
-        "ignasbernotas/laravel-model-generator": "^1.1",
-        "krlove/eloquent-model-generator": "^1.2",
+        "ignasbernotas/laravel-model-generator": "1.1.*",
         "mockery/mockery": "0.9.*",
-        "phpunit/phpunit": "~5.7",
+        "phpunit/phpunit": "~5.0",
         "xethron/migrations-generator": "^2.0"
     },
     "autoload": {
@@ -25,11 +22,7 @@
             "database"
         ],
         "psr-4": {
-            "App\\": "app/"
-        }
-    },
-    "autoload-dev": {
-        "psr-4": {
+            "App\\": "app/",
             "Tests\\": "tests/"
         }
     },

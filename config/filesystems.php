@@ -48,7 +48,7 @@ return [
             'root' => storage_path('app'),
         ],
 
-        'archivos' => [
+         'archivos' => [
             'driver' => 'local',
             'root' => storage_path('archivos'),
         ],
