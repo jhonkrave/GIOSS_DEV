@@ -16,126 +16,62 @@ class AAC {
 	use ToolsForFilesController;
 	private $handle;
 	private $folder;
+  private $detail_erros;
+  private $wrong_rows;
+  private $success_rows;
 
 
 
-   function __construct($pathfolder, $pathFile) {
-       if(!($this->handle = fopen($pathFile, 'r'))) throw new Exception("Error al abrir el archivo AAC");
-       $this->folder = $pathfolder;
-   }
+  function __construct($pathfolder, $pathFile) {
+    if(!($this->handle = fopen($pathFile, 'r'))) throw new Exception("Error al abrir el archivo AAC");
+    $this->folder = $pathfolder;
+    $this->detail_erros = array(['No. línea archivo original', 'No. linea en archivo de errores','Campo', 'Detalle']);
+    $this->wrong_rows =  array();
+    $this->success_rows =  array();
+  }
 
-   public function manageContent() {
-   		
-   		try {
+  public function manageContent() {
 
-   			$isValidRow = true;
-   			$detail_erros = array(['No. línea archivo original', 'No. linea en archivo de errores','Campo', 'Detalle']);
-   			$lineCount = 1;
-   			$lineCountWF = 1;
-   			$wrong_rows =  array();
-   			$success_rows =  array();
+		try {
 
+      $lineCount = 1;
+      $lineCountWF = 1;
+			$firtsRow = fgetcsv($this->handle, 0, "|");
+			$firtsRowValidation = $this->validateFirstRow($firtsRow);
 
-
-   			$firtsRow = fgetcsv($this->handle, 0, "|");
-   			$firtsRowValidation = $this->validateFirstRow($firtsRow);
-        if ($firtsRowValidation->isValidRow) {
-          
-          while($data = fgetcsv($this->handle, 0, "|")){
-            $isValidRow = true;
-            $this->validateEntitySection($isValidRow, $detail_erros, $lineCount, $lineCountWF, array_slice($data,0,6));
-            $this->validateUserSection($isValidRow, $detail_erros, $lineCount, $lineCountWF, array_slice($data,6,9,true));
-            $this->validateAAC($isValidRow, $detail_erros, $lineCount, $lineCountWF, array_slice($data,15,14,true));
-
-            if(!$isValidRow){
-              $lineCount++;
-            $lineCountWF++;
-            array_push($wrong_rows, $data);
-            }
-          }
-
-
-            
-          
-          if(count($wrong_rows) > 0){
-             
-              $filewrongname = $this->folder.'RegistrosErroneos';
-              
-              $wrongfile = fopen($filewrongname, 'w');                              
-              fprintf($wrongfile, chr(0xEF).chr(0xBB).chr(0xBF)); // darle formato unicode utf-8
-              foreach ($wrong_rows as $row) {
-                  fputcsv($wrongfile, $row,'|');              
-              }
-              fclose($wrongfile);
-              
-              //----
-              $detailsFilename =  $this->folder.'DetallesErrores';
-              
-              $detailsFileHandler = fopen($detailsFilename, 'w');
-              fprintf($detailsFileHandler, chr(0xEF).chr(0xBB).chr(0xBF)); // darle formato unicode utf-8
-              foreach ($detail_erros as $row) {
-                  fputcsv($detailsFileHandler, $row,'|');              
-              }
-              fclose($detailsFileHandler);
-              
-          }
-          
-          if(count($success_rows) > 0){ //porque la primera fila es corresponde a los titulos no datos
-              $arrayIdsFilename = $this->folder.'registrosExitosos';
-              
-              $arrayIdsFileHandler = fopen($arrayIdsFilename, 'w');
-              fprintf($arrayIdsFileHandler, chr(0xEF).chr(0xBB).chr(0xBF)); // darle formato unicode utf-8
-              foreach ($success_rows as $row) {
-                  fputcsv($arrayIdsFileHandler, $row, '|');              
-              }
-              fclose($arrayIdsFileHandler);
-              
-              $response = new \stdClass();
-              
-              if(count($wrong_rows) > 0){
-                  $response->warning = 'Archivo cargado con inconsistencias<br> Para mayor informacion descargar la carpeta con los detalles de inconsitencias.'; 
-              }else{
-                  $response->success = 'Archivo cargado satisfactoriamente';
-              }
-              
-              $zipname = 'detalles'.time().'.zip';
-              $zipsavePath = storage_path('archivos').'/../../public/zips/'.$zipname;
-              $this->createZip($this->folder, $zipname);
-              
-              $response->urlzip = "<a href='".$zipname."'>Descargar detalles</a>";
-              
-              echo json_encode($response);
-              
-          }else{
-              $response = new \stdClass();
-              $response->error = "No se cargo el archivo. Para mayor informacion descargar la carpeta con los detalles de inconsitencias.";
-              
-              $zipname = 'detalles'.time().'.zip';
-              $zipsavePath = storage_path('archivos').'/../../public/zips/'.$zipname;
-              //dd($zipsavePath);
-              $this->createZip($this->folder, $zipsavePath);
-              
-              $response->urlzip = "<a href='".asset('zips/'.$zipname)."'>Descargar detalles</a>";
-              
-              echo json_encode($response);
-          }
-
-        }else{
-          $response = new \stdClass();
-          $response->error = $firtsRowValidation->msj;
-          echo json_encode($response);
-        }
+      if ($firtsRowValidation->isValidRow) {
         
+        while($data = fgetcsv($this->handle, 0, "|")){
+          $isValidRow = true;
+          $this->validateEntitySection($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,0,6));
+          $this->validateUserSection($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,6,9,true));
+          $this->validateAAC($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,15,14,true));
 
+          if(!$isValidRow){
+            $lineCount++;
+            $lineCountWF++;
+            array_push($this->wrong_rows, $data);
+          }else{
+            //save info
+            $lineCount++;
+          }
+        }
 
-   			
-   		} catch (\Exception $e) {
-   			$response = new \stdClass();
-   			$response->error = $e->getMessage();
-   			echo json_encode($response);
-   		}
+        $this->generateFiles();
 
-   }
+      }else{
+        $response = new \stdClass();
+        $response->error = $firtsRowValidation->msj;
+        echo json_encode($response);
+      }
+    
+		} catch (\Exception $e) {
+			$response = new \stdClass();
+			$response->error = $e->getMessage();
+			echo json_encode($response);
+		}
+
+  }
 
 
   private function validateAAC(&$isValidRow, &$detail_erros, $lineCount, $lineCountWF,$consultSection) {
@@ -191,7 +127,7 @@ class AAC {
 
     //validacion campo 18(2), 19(3) y 20(4)
     if(isset($consultSection[18])) {
-        if(!is_numeric($consultSection[18]) || strlen($consultSection[18] != 1)){
+        if(!is_numeric($consultSection[18]) || strlen($consultSection[18]) != 1){
           $isValidRow = false;
         array_push($detail_erros, [$lineCount, $lineCountWF, 19, "El campo debe ser un número de un dígito"]);
         }else{
@@ -241,7 +177,7 @@ class AAC {
 
     //validacion campo 22
     if(isset($consultSection[21])) {
-        if(strlen($consultSection[21] != 4)){
+        if(strlen($consultSection[21]) != 4){
           $isValidRow = false;
           array_push($detail_erros, [$lineCount, $lineCountWF, 22, "El campo debe tener un longitud de 4 caracteres."]);
         }else{
@@ -269,7 +205,7 @@ class AAC {
 
     //validacion campo 24
     if(isset($consultSection[23])) {
-        if(strlen($consultSection[23] != 4)){
+        if(strlen($consultSection[23]) != 4){
           $isValidRow = false;
           array_push($detail_erros, [$lineCount, $lineCountWF, 24, "El campo debe tener un longitud de 4 caracteres."]);
         }else{
@@ -297,7 +233,7 @@ class AAC {
 
     //validacion campo 26
     if(isset($consultSection[25])) {
-        if(strlen($consultSection[25] != 4)){
+        if(strlen($consultSection[25]) != 4){
           $isValidRow = false;
           array_push($detail_erros, [$lineCount, $lineCountWF, 26, "El campo debe tener un longitud de 4 caracteres."]);
         }else{
@@ -356,6 +292,73 @@ class AAC {
       $isValidRow = false;
       array_push($detail_erros, [$lineCount, $lineCountWF, 29, "El campo no debe ser nulo"]);
     }
+  }
+
+  private function generateFiles() {
+
+    if(count($this->wrong_rows) > 0){
+             
+      $filewrongname = $this->folder.'RegistrosErroneos';
+      
+      $wrongfile = fopen($filewrongname, 'w');                              
+      fprintf($wrongfile, chr(0xEF).chr(0xBB).chr(0xBF)); // darle formato unicode utf-8
+      foreach ($this->wrong_rows as $row) {
+          fputcsv($wrongfile, $row,'|');              
+      }
+      fclose($wrongfile);
+      
+      //----se genera el archivo de detalles de error
+      $detailsFilename =  $this->folder.'DetallesErrores';
+      
+      $detailsFileHandler = fopen($detailsFilename, 'w');
+      fprintf($detailsFileHandler, chr(0xEF).chr(0xBB).chr(0xBF)); // darle formato unicode utf-8
+      foreach ($this->detail_erros as $row) {
+          fputcsv($detailsFileHandler, $row,'|');              
+      }
+      fclose($detailsFileHandler);
+      
+    }
+
+    if(count($this->success_rows) > 0){ //porque la primera fila es corresponde a los titulos no datos
+        $arrayIdsFilename = $this->folder.'registrosExitosos';
+        
+        $arrayIdsFileHandler = fopen($arrayIdsFilename, 'w');
+        fprintf($arrayIdsFileHandler, chr(0xEF).chr(0xBB).chr(0xBF)); // darle formato unicode utf-8
+        foreach ($this->success_rows as $row) {
+            fputcsv($arrayIdsFileHandler, $row, '|');              
+        }
+        fclose($arrayIdsFileHandler);
+        
+        $response = new \stdClass();
+        
+        if(count($this->wrong_rows) > 0){
+            $response->warning = 'Archivo cargado con inconsistencias<br> Para mayor informacion descargar la carpeta con los detalles de inconsitencias.'; 
+        }else{
+            $response->success = 'Archivo cargado satisfactoriamente';
+        }
+        
+        $zipname = 'detalles'.time().'.zip';
+        $zipsavePath = storage_path('archivos').'/../../public/zips/'.$zipname;
+        $this->createZip($this->folder, $zipname);
+        
+        $response->urlzip = "<a href='".$zipname."'>Descargar detalles</a>";
+        
+        echo json_encode($response);
+        
+    }else{
+        $response = new \stdClass();
+        $response->error = "No se cargo el archivo. Para mayor informacion descargar la carpeta con los detalles de inconsitencias.";
+        
+        $zipname = 'detalles'.time().'.zip';
+        $zipsavePath = storage_path('archivos').'/../../public/zips/'.$zipname;
+        //dd($zipsavePath);
+        $this->createZip($this->folder, $zipsavePath);
+        
+        $response->urlzip = "<a href='".asset('zips/'.$zipname)."'>Descargar detalles</a>";
+        
+        echo json_encode($response);
+    }
+
   }
 
 
