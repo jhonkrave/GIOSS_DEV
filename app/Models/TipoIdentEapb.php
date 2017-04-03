@@ -5,20 +5,18 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Class Registro
+ * Class TipoIdentEapb
  */
-class Registro extends Model
+class TipoIdentEapb extends Model
 {
-    protected $table = 'registro';
+    protected $table = 'tipo_ident_eapb';
 
-    protected $primaryKey = 'id_registro_seq';
+    protected $primaryKey = 'id_tipo_ident';
 
 	public $timestamps = false;
 
     protected $fillable = [
-        'id_archivo',
-        'id_user',
-        'id_eapb'
+        'descripcion'
     ];
 
     protected $guarded = [];

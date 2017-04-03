@@ -191,9 +191,6 @@ function uploadFile() {
     var formData = new FormData($('#cargaArchivos')[0]);
     
     
-    
-
-    
     $.ajax({
         url: route,
         data: formData,
@@ -207,23 +204,11 @@ function uploadFile() {
            
         },
         success : function (msj) {
-            $('#error_area').empty();
-
-            if (msj.error){
-
-            	$('#error_area').append(msj.error);
-            	$('#error_area').append(msj.urlzip);
-            	
-            }else if(msj.warning){
-            	$('#error_area').append(msj.warning);
-            	$('#error_area').append(msj.urlzip);
-            }else if(msj.success){
-            	$('#error_area').append(msj.success);
-            	$('#error_area').append(msj.urlzip);
-            	
-            }
-            $('#alert').fadeIn();
-            console.log(msj);
+            
+            console.log('consecutivo: '+msj);
+            setInterval(function(){
+				consultStatusFiles(msj)
+			}, 5000);
         },
         error: function (msj) {
             console.log(msj);
@@ -232,3 +217,32 @@ function uploadFile() {
     });
      
 }
+
+function consultStatusFiles(consecutive) {
+
+	data = new Array();
+	data.push({name:'consecutive', value:consecutive});
+	$.ajax({
+        url: route,
+        data: data,
+        type: 'GET',
+        dataType: 'json',
+        cache: false,
+        // parametros necesarios para la carga de archivos
+        contentType: false,
+        processData: false,
+        beforeSend: function() {
+           
+        },
+        success : function (msj) {
+            
+            console.log(msj);
+        },
+        error: function (msj) {
+            console.log(msj);
+        }
+        // ... Other options like success and etc
+    });
+}
+
+

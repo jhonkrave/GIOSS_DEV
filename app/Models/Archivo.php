@@ -11,7 +11,7 @@ class Archivo extends Model
 {
     protected $table = 'archivo';
 
-    protected $primaryKey = 'id_archivo_seq';
+    public $primaryKey = 'id_archivo_seq';
 
 	public $timestamps = false;
 

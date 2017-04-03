@@ -37,6 +37,7 @@ Route::group(['middleware' => 'auth'], function(){
 	Route::resource('/registro', 'usersController');
 	Route::get('/upload_files', 'filesController@upload');
 	Route::name('uploading')->post('/upload_files','filesController@store');
+	Route::name('status_files')->get('/status_files','filesController@show');
 	//Route::post('/registrar', 'usersController@create');
 });
 

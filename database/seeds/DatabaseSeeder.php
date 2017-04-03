@@ -16,6 +16,15 @@ class DatabaseSeeder extends Seeder
         
         $this->call(DbRolesSeeder::class);
         $this->call(UserAdministratorSeeder::class);
+
+        $this->call(sexoSeeder::class);
+        $this->call(temaImformacion_Seeder::class);
+        $this->call(tipoEAPBSeeder::class);
+        $this->call(tipoEntidadSeeder::class);
+        $this->call(tipoIdentEAPBSeeder::class);
+        $this->call(tipoIdentEntidadSeeder::class);
+        $this->call(tipoIdentificacionSeeder::class);
+        $this->call(ambitoSeeder::class);
         //$this->call(DBtipoEntidadSeeder::class);
 	    //$this->call(DBconsulta_homologoSeeder::class);
 

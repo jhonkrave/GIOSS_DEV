@@ -7,83 +7,75 @@ use App\Models\TipoEntidad;
 use App\Models\TipoIdentificacionEntidad;
 use App\Models\TipoIdentificacionUser;
 use App\Models\GenerosUser;
+use App\Models\Eapb;
+use App\Models\TipoEapb;
+use App\Models\TipoIdentEapb;
 
 trait ToolsForFilesController {
 
-	function validateFirstRow($firstRow) {
-		$result = new \stdClass();
-		$result->isValidRow = true;
+	function validateFirstRow(&$isValidRow, &$detail_erros, $lineCountWF,$firstRow) {
 
 		if(isset($firstRow[0]) || is_numeric($firstRow[0] )){
 			$exists = EntidadesSectorSalud::where('cod_habilitacion', $firstRow[0])->first();
 			if(!$exists){
-				$result->isValidRow = false;
-				$result->msj ="Error en la línea 1 No existe una entidad con el código de habilitación \"".$firstRow[0]."\"";
-				return $result;
+				$isValidRow = false;
+				array_push($detail_erros, [1, $lineCountWF, 1, "NO existe u  código de habilitación para la entidad"]);
 			}
 			
 		}else{
-			$result->isValidRow = false;
-			$result->msj ="Error en la línea 1. El campo 1 debe ser un valor númerico no nulo";
-			return $result;
+			$isValidRow = false;
+			array_push($detail_erros, [1, $lineCountWF, 1, "Debe ser un valor numérico no nulo"]);
 		}
 
 		if(isset($firstRow[1])){
 			if(!preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])$/", $firstRow[1])){
-				$result->isValidRow = false;
-				$result->msj ="Error en la línea 1. El campo 2 debe tener el formato YYYY-MM";
-				return $result;	
+				$isValidRow = false;
+				array_push($detail_erros, [1, $lineCountWF, 2, "El campo debe tener el fomato AAAA-MM"]);	
 			}
 		}else{
-			$result->isValidRow = false;
-			$result->msj ="Error en la línea 1. El campo 2 no debe ser  nulo";
-			return $result;	
+			$isValidRow = false;
+			array_push($detail_erros, [1, $lineCountWF, 2, "El campo no debe ser nulo"]);
 			
 		}
 
 		if(isset($firstRow[2])) {
 			if(!preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/", $firstRow[2])){
-				$result->isValidRow = false;
-				$result->msj ="Error en la línea 1. El campo 3 debe tener el formato YYYY-MM-DD";
-				return $result;	
+				$isValidRow = false;
+				array_push($detail_erros, [1, $lineCountWF, 3, "El campo debe tener el formato AAAA-MM-DD"]);	
 				
 			}
 		}else{
-			$result->isValidRow = false;
-			$result->msj ="Error en la línea 1. El campo 3 no debe ser nulo";
-			return $result;
+			$isValidRow = false;
+			array_push($detail_erros, [1, $lineCountWF, 3, "El campo no debe ser nulo"]);
 		}
 
 		if(isset($firstRow[3]) ){
 			if(!preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/", $firstRow[2])){
-				$result->isValidRow = false;
-				$result->msj ="Error en la línea 1. El campo 4 debe tener el formato YYYY-MM-DD";
-				return $result;		
+				$isValidRow = false;
+				array_push($detail_erros, [1, $lineCountWF, 4, "El campo debe tener el formato AAAA-MM-DD"]);	
 			}
 		}else{
-			$result->isValidRow = false;
-			$result->msj ="Error en la línea 1. El campo 4 no debe ser nulo";
-			return $result;
+			$isValidRow = false;
+			array_push($detail_erros, [1, $lineCountWF, 4, "El campo no debe ser nulo"]);
 		}
 
-		if (strtotime($firstRow[2]) > strtotime($firstRow[3]) ){
-			$result->isValidRow = false;
-			$result->msj ="Error en la línea 1. El periodo incial (campo 3) debe ser menor que el final (campo 4)";
-			return $result;
+		if(isset($firstRow[2]) && isset($firstRow[3])){
+			if (strtotime($firstRow[2]) > strtotime($firstRow[3]) ){
+				$isValidRow = false;
+				array_push($detail_erros, [1, $lineCountWF, '3 y 4', "El periodo incial debe ser menor que el periodo final"]);
+			}
 		}
+		
 
-		if(isset($firstRow[4]) || !is_numeric($firstRow[4])){
-			$result->isValidRow = false;
-			$result->msj ="Error en la línea 1. El campo 5 debe ser un valor númerico no nulo";
-			return $result;
+		if(!isset($firstRow[4]) || !is_numeric($firstRow[4])){
+			$isValidRow = false;
+			array_push($detail_erros, [1, $lineCountWF, 5, "Debe ser un valor numérico no nulo"]);
 		}
-
-		return $result;
 
 	}
 
     function validateEntitySection(&$isValidRow, &$detail_erros, $lineCount, $lineCountWF, $entitySection) {
-
+    	
     	//validacion campo 1
     	if(isset($entitySection[0]) && preg_match('/^\d{12}$/', $entitySection[0])){
 			$exists = EntidadesSectorSalud::where('cod_habilitacion', $entitySection[0])->first();
@@ -100,7 +92,7 @@ trait ToolsForFilesController {
 		//validacion campo 2
     	if(isset($entitySection[1])){
     		if(strlen($entitySection[1]) == 1){
-    			$tipo = TipoEntidad::where('tipo_entidad',$entitySection[1])->first();
+    			$tipo = TipoEapb::where('id_tipo_ent',$entitySection[1])->first();
     			if(!$tipo){
     				$isValidRow = false;
 					array_push($detail_erros, [$lineCount, $lineCountWF, 2, "El  valor del campo no corresponde a un código de tipo entidad"]);
@@ -118,7 +110,7 @@ trait ToolsForFilesController {
 		//validacion campo 3
     	if(isset($entitySection[2])){
     		if(strlen($entitySection[2]) == 2){
-    			$tipo_ident = TipoIdentificacionEntidad::where('id_tipo_ident',$entitySection[2])->first();
+    			$tipo_ident = TipoIdentEapb::where('id_tipo_ident',$entitySection[2])->first();
     			if(!$tipo_ident){
     				$isValidRow = false;
 					array_push($detail_erros, [$lineCount, $lineCountWF, 3, "El valor del campo no corresponde a un código de tipo identificacion entidad"]);
@@ -135,7 +127,7 @@ trait ToolsForFilesController {
 		//validacion campo 4
     	if(isset($entitySection[3])){
     		if(preg_match('/^\d{12}$/', $entitySection[3])){
-    			$tipo = EntidadesSectorSalud::where('num_identificacion',$entitySection[3])->first();
+    			$tipo = Eapb::where('num_identificacion',$entitySection[3])->first();
     			if(!$tipo){
     				$isValidRow = false;
 					array_push($detail_erros, [$lineCount, $lineCountWF, 4, "El  valor del campo no corresponde a un número de identificación de entidad registrado"]);
@@ -152,7 +144,7 @@ trait ToolsForFilesController {
 		//validacion campo 5
     	if(isset($entitySection[4])){
     		if(strlen($entitySection[4]) == 6){
-    			$tipo = EntidadesSectorSalud::where('cod_habilitacion',$entitySection[4])->first();
+    			$tipo = Eapb::where('cod_eapb',$entitySection[4])->first();
     			if(!$tipo){
     				$isValidRow = false;
 					array_push($detail_erros, [$lineCount, $lineCountWF, 5, "El  valor del campo no corresponde a un código de habilitación válido"]);
@@ -223,10 +215,10 @@ trait ToolsForFilesController {
 		}
 
 		//validación campo 10
-    	if(isset($userSection[9]) || $userSection[9] == '' ) {
-    		if(strlen($userSection[9]) > 30 ){
+    	if(isset($userSection[9])) {
+    		if(strlen($userSection[9]) > 30 || $userSection[9] == '' ){
     			$isValidRow = false;
-				array_push($detail_erros, [$lineCount, $lineCountWF, 10, "El campo debe terner un logitud menor o igual a 30 caracteres."]);
+				array_push($detail_erros, [$lineCount, $lineCountWF, 10, "El campo no de be ser vacio y  debe terner un logitud menor o igual a 30 caracteres."]);
     		}
 		}else{
 			$isValidRow = false;
@@ -245,8 +237,8 @@ trait ToolsForFilesController {
 		}
 
 		//validación campo 12
-    	if(isset($userSection[11]) || $userSection[11] == '') {
-    		if(strlen($userSection[11]) > 30 ){
+    	if(isset($userSection[11]) ) {
+    		if(strlen($userSection[11]) > 30 || $userSection[11] == '' ){
     			$isValidRow = false;
 				array_push($detail_erros, [$lineCount, $lineCountWF, 12, "El campo debe terner un logitud menor o igual a 30 caracteres."]);
     		}
@@ -328,6 +320,11 @@ trait ToolsForFilesController {
 	    
 	    // Zip archive will be created only after closing object
 	    $zip->close();
+	}
+
+	function validateFileName(&$isValidRow, &$detail_erros, $fileName, $firstRow){
+		$fecha_ini = substr($fileName,15,8);
+		$fecha_fin = substr($fileName,23,8);
 	}
 
 
