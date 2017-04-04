@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use App\Classes\AAC;
+use App\Models\FileStatus;
 
 class filesController extends Controller
 {
@@ -41,30 +42,33 @@ class filesController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
-    {
+    {   
+
+        $consecutive = time();
+        echo json_encode($consecutive);
+        
         $files = $request->file('archivo');
         $fileTypes = $request->tipo_file;
-
+        
+        
+        
+        
         $count = 0;
-        $routeFile = null;
-        // $name = $files->getClientOriginalName();
-
-        // $routeFile =  Storage::disk('archivos')->put($name, \File::get($files));
         foreach($files as $file) {
             $rules = array('file' => 'required'); //'required|mimes:png,gif,jpeg,txt,pdf,doc'
             $validator = Validator::make(array('file'=> $file), $rules);
             $validator->validate();
-            $folder = '/'.$fileTypes[$count].time().'/';
+            $folder = '/'.$consecutive.'/'.$fileTypes[$count].'/';
 
             $routeFolder = storage_path('archivos').$folder;
-            $fileName = $folder.$file->getClientOriginalName();
-            $routeFile = $routeFolder.$file->getClientOriginalName();
-            Storage::disk('archivos')->put($fileName, \File::get($file));
+            $routeFile = $folder.$file->getClientOriginalName();
+            $fileName = $file->getClientOriginalName();
+            Storage::disk('archivos')->put($routeFile, \File::get($file));
             
             try {
                 switch ($fileTypes[$count]) {
                     case 'AAC':
-                        $aac = new AAC($routeFolder,$routeFile);
+                        $aac = new AAC($routeFolder,$fileName, $consecutive);
                         $aac->manageContent();
                         break;
                     
@@ -84,13 +88,6 @@ class filesController extends Controller
           
         }
 
-        // if ($routeFile != null){
-        //     echo json_encode('si');
-        // }else{
-        //     echo json_encode('NO');
-        // }
-        
-
         
 
     }
@@ -101,9 +98,11 @@ class filesController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Request $request)
     {
-        //
+        
+        $result = FileStatus::where('consecutive', $request->consecutive);
+        echo json_encode($result);
     }
 
     /**

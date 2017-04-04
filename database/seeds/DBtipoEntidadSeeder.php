@@ -11,7 +11,24 @@ class DBtipoEntidadSeeder extends Seeder
      * @return void
      */
     public function run()
-    {
-        factory(tipo_entidad::class,4)->create();
+    {	
+    	DB::table('books')->delete();
+    	$header = NULL;
+       	$data = array();
+        //factory(tipo_entidad::class,4)->create();
+        if (($handle = fopen($filename, 'r')) !== FALSE)
+        {
+            while (($row = fgetcsv($handle, 1000, $delimiter)) !== FALSE)
+            {
+                if(!$header)
+                    $header = $row;
+                else
+                    $data[] = array_combine($header, $row);
+            }
+            fclose($handle);
+        }
+
+        DB::table('books')->insert($data);
+
     }
 }

@@ -15,8 +15,10 @@ class CreateRegistroTable extends Migration {
 		Schema::create('registro', function(Blueprint $table)
 		{
 			$table->bigInteger('id_registro_seq', true);
-			$table->integer('id_archivo')->nullable();
-			$table->integer('id_user')->nullable();
+			$table->integer('id_archivo');
+			$table->integer('id_user');
+			$table->integer('id_eapb');
+			$table->unique(['id_archivo','id_user', 'id_eapb']);
 		});
 	}
 

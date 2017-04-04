@@ -17,7 +17,8 @@ class Registro extends Model
 
     protected $fillable = [
         'id_archivo',
-        'id_user'
+        'id_user',
+        'id_eapb'
     ];
 
     protected $guarded = [];

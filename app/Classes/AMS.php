@@ -100,49 +100,47 @@ class AMS {
 
     //validacion campo 18
      if(isset($consultSection[17])) {
-        if(!preg_match("/^[1-4]$/", $consultSection[17])){
-          $isValidRow = false;
-        array_push($detail_erros, [$lineCount, $lineCountWF, 19, "El campo debe ser un número con un valor entre 1 y 4"]);
-        }else{
-          switch ($consultSection[17]) {
-            case '1':
-              $exists = MedicamentosCum::where('codigo_medicamento',$consultSection[16])->first();
-              if(!$exists){
-                $isValidRow = false;
-                array_push($detail_erros, [$lineCount, $lineCountWF, 17, "El valor del campo no correspondea un codigo de medicamentos CUM cups válido"]);
-              }
-              break;
-            
-            case '2':
-              $exists = MedicamentosCum::where('codigo_medicamento',$consultSection[16])->first();
-              if(!$exists){
-                $isValidRow = false;
-                array_push($detail_erros, [$lineCount, $lineCountWF, 17, "El valor del campo no correspondea un codigo de medicamentos CUM cups válido"]);
-              }
-              break;
+        
+        switch ($consultSection[17]) {
+          case '1':
+            $exists = MedicamentosCum::where('codigo_medicamento',$consultSection[16])->first();
+            if(!$exists){
+              $isValidRow = false;
+              array_push($detail_erros, [$lineCount, $lineCountWF, 17, "El valor del campo no correspondea un codigo de medicamentos CUM cups válido"]);
+            }
+            break;
+          
+          case '2':
+            $exists = MedicamentosCum::where('codigo_medicamento',$consultSection[16])->first();
+            if(!$exists){
+              $isValidRow = false;
+              array_push($detail_erros, [$lineCount, $lineCountWF, 17, "El valor del campo no correspondea un codigo de medicamentos CUM cups válido"]);
+            }
+            break;
 
-            case '3':
-              $exists = MedicamentosR::where('codigo_medicamento',$consultSection[16])->first();
-              if(!$exists){
-                $isValidRow = false;
-                array_push($detail_erros, [$lineCount, $lineCountWF, 17, "El valor del campo no correspondea un codigo de medicamentos CUM cups válido"]);
-              }
-              break;
+          case '3':
+            $exists = MedicamentosR::where('codigo_medicamento',$consultSection[16])->first();
+            if(!$exists){
+              $isValidRow = false;
+              array_push($detail_erros, [$lineCount, $lineCountWF, 17, "El valor del campo no correspondea un codigo de medicamentos CUM cups válido"]);
+            }
+            break;
 
-            case '4':
-              $exists = MedicamentosCum::where('codigo_medicamento',$consultSection[16])->first();
-              if(!$exists){
-                $isValidRow = false;
-                array_push($detail_erros, [$lineCount, $lineCountWF, 17, "El valor del campo no correspondea un codigo de medicamentos CUM cups válido"]);
-              }
-              break;
+          case '4':
+            $exists = MedicamentosCum::where('codigo_medicamento',$consultSection[16])->first();
+            if(!$exists){
+              $isValidRow = false;
+              array_push($detail_erros, [$lineCount, $lineCountWF, 17, "El valor del campo no correspondea un codigo de medicamentos CUM cups válido"]);
+            }
+            break;
 
-            default:
-              # code...
-              break;
-          }
-
+          default:
+            $isValidRow = false;
+            array_push($detail_erros, [$lineCount, $lineCountWF, 19, "El campo debe ser un número con un valor entre 1 y 4"]);
+            break;
         }
+
+        
     }else{
       $isValidRow = false;
       array_push($detail_erros, [$lineCount, $lineCountWF, 19, "El campo no debe ser nulo"]);
@@ -150,9 +148,9 @@ class AMS {
 
     //validacion campo 19
     if(isset($consultSection[18])) {
-        if(!preg_match("/^(2[0-3]|[01][0-9]):([0-5][0-9])$/", $consultSection[18])){
+        if(!is_int( $consultSection[18])){
           $isValidRow = false;
-          array_push($detail_erros, [$lineCount, $lineCountWF, 19, "El campo debe terner el formato HH:MM(Hora Militar)"]);
+          array_push($detail_erros, [$lineCount, $lineCountWF, 19, "El campo debe ser un valor entero"]);
         }
     }else{
       $isValidRow = false;
@@ -161,14 +159,13 @@ class AMS {
 
     //validacion campo 20
     if(isset($consultSection[19])) {
-        if(strlen($consultSection[19] != 4)){
+        if(strlen($consultSection[19]) != 1){
           $isValidRow = false;
-          array_push($detail_erros, [$lineCount, $lineCountWF, 20, "El campo debe tener un longitud de 4 caracteres."]);
+        array_push($detail_erros, [$lineCount, $lineCountWF, 20, "El campo de tener una longitud igual a 1"]);
         }else{
-          $exists = DiagnosticoCiex::where('cod_diagnostico',$consultSection[19])->first();
+          $exists = Ambito::where('ambito',$consultSection[19])->first();
           if(!$exists){
-            $isValidRow = false;
-            array_push($detail_erros, [$lineCount, $lineCountWF, 20, "El valor no corresponde a un valor código de diagnóstico valido"]);
+            array_push($detail_erros, [$lineCount, $lineCountWF, 20, "El valor del campo no correponde a un Ambito valido"]);
           }
         }
     }else{
@@ -176,133 +173,6 @@ class AMS {
       array_push($detail_erros, [$lineCount, $lineCountWF, 20, "El campo no debe ser nulo"]);
     }
 
-    //validacion campo 21
-    if(isset($consultSection[20])) {
-        if(strlen($consultSection[20]) > 50 && $consultSection[20] == ''){
-          $isValidRow = false;
-        array_push($detail_erros, [$lineCount, $lineCountWF, 21, "El campo no dede ser vacio y debe tener una longitud menor o igual a 50"]);
-        }
-        
-    }else{
-      $isValidRow = false;
-      array_push($detail_erros, [$lineCount, $lineCountWF, 21, "El campo no debe ser nulo"]);
-    }
-
-    //validacion campo 22
-    if(isset($consultSection[21])) {
-        if(strlen($consultSection[21] != 4)){
-          $isValidRow = false;
-          array_push($detail_erros, [$lineCount, $lineCountWF, 22, "El campo debe tener un longitud de 4 caracteres."]);
-        }else{
-          $exists = DiagnosticoCiex::where('cod_diagnostico',$consultSection[21])->first();
-          if(!$exists){
-            $isValidRow = false;
-            array_push($detail_erros, [$lineCount, $lineCountWF, 22, "El valor no corresponde a un valor código de diagnóstico valido"]);
-          }
-        }
-    }else{
-      $isValidRow = false;
-      array_push($detail_erros, [$lineCount, $lineCountWF, 22, "El campo no debe ser nulo"]);
-    }
-
-    //validacion campo 23
-    if(isset($consultSection[22])) {
-        if(strlen($consultSection[22]) > 50 && $consultSection[22] == ''){
-          $isValidRow = false;
-        array_push($detail_erros, [$lineCount, $lineCountWF, 23, "El campo no dede ser vacio y debe tener una longitud menor o igual a 50"]);
-        }
-    }else{
-      $isValidRow = false;
-      array_push($detail_erros, [$lineCount, $lineCountWF, 23, "El campo no debe ser nulo"]);
-    }
-
-    //validacion campo 24
-    if(isset($consultSection[23])) {
-        if(strlen($consultSection[23]) != ''){
-
-          if(strlen($consultSection[23]) != 4){
-            $isValidRow = false;
-            array_push($detail_erros, [$lineCount, $lineCountWF, 24, "El campo debe tener un longitud de 4 caracteres."]);
-          }else{
-            $exists = DiagnosticoCiex::where('cod_diagnostico',$consultSection[23])->first();
-            if(!$exists){
-              $isValidRow = false;
-              array_push($detail_erros, [$lineCount, $lineCountWF, 24, "El valor no corresponde a un valor código de diagnóstico valido"]);
-            }
-          }
-
-        }
-        
-    }else{
-      $isValidRow = false;
-      array_push($detail_erros, [$lineCount, $lineCountWF, 24, "El campo no debe ser nulo"]);
-    }
-
-    //validacion campo 25
-    if(isset($consultSection[24])) {
-        if(strlen($consultSection[24]) != ''){
-
-          if(strlen($consultSection[24]) != 4){
-            $isValidRow = false;
-            array_push($detail_erros, [$lineCount, $lineCountWF, 25, "El campo debe tener un longitud de 4 caracteres."]);
-          }else{
-            $exists = DiagnosticoCiex::where('cod_diagnostico',$consultSection[24])->first();
-            if(!$exists){
-              $isValidRow = false;
-              array_push($detail_erros, [$lineCount, $lineCountWF, 25, "El valor no corresponde a un valor código de diagnóstico valido"]);
-            }
-          }
-
-        }
-        
-    }else{
-      $isValidRow = false;
-      array_push($detail_erros, [$lineCount, $lineCountWF, 25, "El campo no debe ser nulo"]);
-    }
-
-    //validacion campo 26
-    if(isset($consultSection[25])) {
-        if(!preg_match("/^[1-2]$/", $consultSection[25])){
-          $isValidRow = false;
-          array_push($detail_erros, [$lineCount, $lineCountWF, 26, "El valor del campo no correponde a un valor valido: 1(vivo) - 2(muerto)"]);
-        }
-    }else{
-      $isValidRow = false;
-      array_push($detail_erros, [$lineCount, $lineCountWF, 26, "El campo no debe ser nulo"]);
-    }
-
-    //validacion campo 27
-    if(isset($consultSection[26])) {
-        if(strlen($consultSection[25]) == 2){ //si el anterior registro lo reporta como muerto (2)
-
-          if(strlen($consultSection[26]) != 4){
-            $isValidRow = false;
-            array_push($detail_erros, [$lineCount, $lineCountWF, 27, "El campo debe tener un longitud de 4 caracteres."]);
-          }else{
-            $exists = DiagnosticoCiex::where('cod_diagnostico',$consultSection[26])->first();
-            if(!$exists){
-              $isValidRow = false;
-              array_push($detail_erros, [$lineCount, $lineCountWF, 27, "El valor no corresponde a un valor código de diagnóstico valido"]);
-            }
-          }
-
-        }
-        
-    }else{
-      $isValidRow = false;
-      array_push($detail_erros, [$lineCount, $lineCountWF, 27, "El campo no debe ser nulo"]);
-    }
-
-    //validacion campo 28
-    if(isset($consultSection[27])) {
-        if(strlen($consultSection[27]) > 50 && $consultSection[27] == ''){
-          $isValidRow = false;
-          array_push($detail_erros, [$lineCount, $lineCountWF, 28, "El campo no dede ser vacio y debe tener una longitud menor o igual a 50"]);
-        }
-    }else{
-      $isValidRow = false;
-      array_push($detail_erros, [$lineCount, $lineCountWF, 28, "El campo no debe ser nulo"]);
-    }
 
   }
 

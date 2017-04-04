@@ -1,5 +1,5 @@
 $(document).ready(function(){
-	
+	console.log('funfs');
 	$('#cod_dept').val(0);
 	getMunicipios(0);
 
