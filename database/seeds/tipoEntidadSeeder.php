@@ -14,7 +14,7 @@ class tipoEntidadSeeder extends Seeder
     {
         return TipoEntidad::create([
         	'id_tipo_ent' => '239',
-        	'descripcion' =>'Entidad Fuente de la Información: Institución Prestadora de Servicios de Salud IPS.',
+        	'descripcion' =>'Institución Prestadora de Servicios de Salud IPS.',
   
         ]);
     }
