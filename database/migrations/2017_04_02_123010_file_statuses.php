@@ -20,6 +20,8 @@ class FileStatuses extends Migration
             $table->bigInteger('archivoid');
             $table->string('current_status', 20)->nullable();
             $table->integer('porcent')->nullable()->default(0);
+            $table->integer('total_registers')->nullable()->default(0);
+            $table->integer('current_line')->nullable()->default(0);
             $table->string('final_status', 20)->nullable();
             $table->string('zipath', 300)->nullable();
             $table->unique(['file_statuses_id','consecutive','archivoid']);

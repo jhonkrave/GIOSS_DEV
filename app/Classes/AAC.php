@@ -18,6 +18,7 @@ use App\Models\Eapb;
 use App\Models\Consultum;
 use App\Models\EntidadesSectorSalud;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 
 class AAC {
@@ -96,12 +97,10 @@ class AAC {
       $isValidFirstRow = true ;
       
       
-      $lineCount = 1;
-      $lineCountWF = 1;
+      
 			$firtsRow = fgetcsv($this->handle, 0, "|");
       
-			$this->validateFirstRow($isValidFirstRow, $this->detail_erros, $lineCount, $firtsRow);
-
+			$this->validateFirstRow($isValidFirstRow, $this->detail_erros, $firtsRow);
 
       if ($isValidFirstRow && $isValidFile) {
 
@@ -111,11 +110,15 @@ class AAC {
         $entidad = EntidadesSectorSalud::where('cod_habilitacion', $firtsRow[0])->first();
         $this->archivo->id_entidad = $entidad->id_entidad;
         $this->archivo->numero_registros = $firtsRow[4];
-        
         $this->archivo->save();
 
+        $this->file_status->total_registers =  $firtsRow[4];
+        $this->file_status->save();
+
+        $lineCount = 2;
+        $lineCountWF = 2;
         //se valida cada línea
-        while($data = fgetcsv($this->handle, 0, "|"))
+        while($data = fgetcsv($this->handle, 10000, "|"))
         {
           $isValidRow = true;
           $this->validateEntitySection($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,0,6));
@@ -123,13 +126,14 @@ class AAC {
           $this->validateAAC($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,15,14,true));
 
           if(!$isValidRow){
-            //dd('entro');
+            
+            array_push($this->wrong_rows, $data);
+            $this->updateStatusFile($lineCount); //se acatualiza la lienea ya tratada
             $lineCount++;
             $lineCountWF++;
-            array_push($this->wrong_rows, $data);
+            continue;
           }else{
-            //save info
-            
+              
             //se valida duplicidad en la informacion
             $exists = DB::table('consulta')
             ->join('registro', 'consulta.id_registro', '=', 'registro.id_registro_seq')
@@ -154,11 +158,12 @@ class AAC {
               
               array_push($this->detail_erros, [$lineCount, $lineCountWF, '', "Registro duplicado"]);
               array_push($this->wrong_rows, $data);
-              $lineCount++;
+              $this->updateStatusFile($lineCount);
               $lineCountWF++;
+              $lineCount++;
+              continue;
             }else
             {
-              // se almacena la informacion correpondiente al paciente
         
               $useripsid = 0;
               $ipsuser = new UserIp();
@@ -203,23 +208,13 @@ class AAC {
 
               $consult->save();
 
-              
-
-              //se actualiza el porcentaje
-              $register_num = $this->archivo->numero_registros;
-              $Porcent =  $this->file_status->porcent;
-              $currentPorcent = ( $lineCount  / $register_num)*100;
-              $dif = $currentPorcent -  $Porcent;
-              if ($dif >= 1){
-                $this->file_status->porcent = $currentPorcent;
-                $this->file_status->save();
-              }
-              $lineCount++;
-            }
-            
+            }  
           }
+          $this->updateStatusFile($lineCount);
+          $lineCount++;
         }
 
+        fclose($this->handle);
         $this->generateFiles();
 
       }else{
@@ -230,6 +225,26 @@ class AAC {
 		  print_r($e->getMessage());
 		}
 
+  }
+
+  private function updateStatusFile($lineCount)
+  {
+    //se actualiza el porcentaje
+    $register_num = $this->archivo->numero_registros;
+    $Porcent =  $this->file_status->porcent;
+    $currentPorcent = ( ($lineCount - 1)  / $register_num)*100;
+
+    Log::info("Número de registros " . $register_num);
+    Log::info("porcentaje almacenado " . $Porcent);
+    Log::info("porcentaje actual " . $currentPorcent);
+
+    $dif = $currentPorcent -  $Porcent;
+    if ($dif >= 1){
+      $this->file_status->current_line = $lineCount - 1;
+      $this->file_status->porcent = intval($currentPorcent);
+      $this->file_status->save();
+    }
+    return true;
   }
 
 
@@ -252,7 +267,7 @@ class AAC {
           $isValidRow = false;
         array_push($detail_erros, [$lineCount, $lineCountWF, 17, "El campo de tener una longitud igual a 1"]);
         }else{
-          $exists = Ambito::where('ambito',$consultSection[16])->first();
+          $exists = Ambito::where('cod_ambito',$consultSection[16])->first();
           if(!$exists){
             array_push($detail_erros, [$lineCount, $lineCountWF, 17, "El valor del campo no correponde a un Ambito valido"]);
           }
@@ -290,7 +305,7 @@ class AAC {
           $isValidRow = false;
         array_push($detail_erros, [$lineCount, $lineCountWF, 19, "El campo debe ser un número de un dígito"]);
         }else{
-          switch ($consultSection[3]) {
+          switch ($consultSection[18]) {
             case '1':
               $exists = ConsultaCup::where('cod_consulta',$consultSection[17])->first();
               if(!$exists){
@@ -308,7 +323,8 @@ class AAC {
               break;
 
             default:
-              # code...
+                $isValidRow = false;
+                array_push($detail_erros, [$lineCount, $lineCountWF, 19, "El campo debe ser 1 o 4."]);
               break;
           }
 

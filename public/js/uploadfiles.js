@@ -188,9 +188,9 @@ function validateNameFiles(){
 
 function uploadFile() {
     
-    
+    var consecutive = Date.now();
     var formData = new FormData($('#cargaArchivos')[0]);
-    
+    formData.append('consecutive', consecutive);
     
     $.ajax({
         url: route,
@@ -203,13 +203,9 @@ function uploadFile() {
         processData: false,
         beforeSend: function() {
            $('#divgif').append(loadGif);
-        },
-        success : function (msj) {
-            
-            console.log('consecutivo: '+msj);
-            interval = setInterval(function(){
-				consultStatusFiles(msj)
-			}, 15000);
+           interval = setInterval(function(){
+				consultStatusFiles(consecutive);
+			}, 5000);
         },
         error: function (msj) {
             console.log(msj);
@@ -243,7 +239,7 @@ function consultStatusFiles(consecutive) {
 
             	var html = '<div class="form-group well "> <div class="row"> <label class="col-md-4">Nombre:</label> <label class="col-md-8" style="display: inline-block; width: 300px; overflow: hidden; text-overflow: ellipsis;">'+msj[x].nombre+'0'+msj[x].version+'.txt</label></div> <div class="row"> <label class="col-md-4">Estado:</label> <label class="col-md-8">'+msj[x].current_status+'</label></div>';
 
-            	html += '<div class="row"> <label class="col-md-4">% cargado: </label> <label class="col-md-8">'+msj[x].porcent+'%</label></div>';
+            	html += '<div class="row"> <label class="col-md-4">% cargado: </label> <label class="col-md-8">'+msj[x].porcent+'% => '+msj[x].current_line+'/'+msj[x].total_registers+'</label></div>';
             	if(msj[x].current_status == 'COMPLETED')
             	{
             		switch(msj[x].final_status)

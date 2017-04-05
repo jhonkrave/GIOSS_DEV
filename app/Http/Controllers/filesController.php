@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Http\Controllers;
-
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -45,12 +44,10 @@ class filesController extends Controller
     public function store(Request $request)
     {   
 
-        $consecutive = time();
-        
+        $consecutive = $request->consecutive;
         
         $files = $request->file('archivo');
         $fileTypes = $request->tipo_file;
-        echo json_encode($consecutive);
         
         
         $count = 0;
@@ -65,10 +62,11 @@ class filesController extends Controller
             $fileName = $file->getClientOriginalName();
             Storage::disk('archivos')->put($routeFile, \File::get($file));
             
-            try {
+            //try {
                 switch ($fileTypes[$count]) {
                     case 'AAC':
                         $aac = new AAC($routeFolder,$fileName, $consecutive);
+
                         $aac->manageContent();
                         break;
                     
@@ -77,14 +75,15 @@ class filesController extends Controller
                         $aac->manageContent();
                         break;
                 }
+                $count++;
 
-            } catch (\Exception $e) {
-                $response = new \stdClass();
-                $response->error = $e->getMessage();
-                echo $e;
-            }
+            // } catch (\Exception $e) {
+            //     $response = new \stdClass();
+            //     $response->error = $e->getMessage().'r';
+            //     echo $e;
+            // }
             
-          $count++;
+          
           
         }
 

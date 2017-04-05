@@ -13,63 +13,63 @@ use App\Models\TipoIdentEapb;
 
 trait ToolsForFilesController {
 
-	function validateFirstRow(&$isValidRow, &$detail_erros, $lineCountWF,$firstRow) {
+	function validateFirstRow(&$isValidRow, &$detail_erros, $firstRow) {
 
 		if(isset($firstRow[0]) || is_numeric($firstRow[0] )){
 			$exists = EntidadesSectorSalud::where('cod_habilitacion', $firstRow[0])->first();
 			if(!$exists){
 				$isValidRow = false;
-				array_push($detail_erros, [1, $lineCountWF, 1, "NO existe u  código de habilitación para la entidad"]);
+				array_push($detail_erros, [1, 0, 1, "NO existe u  código de habilitación para la entidad"]);
 			}
 			
 		}else{
 			$isValidRow = false;
-			array_push($detail_erros, [1, $lineCountWF, 1, "Debe ser un valor numérico no nulo"]);
+			array_push($detail_erros, [1, 0, 1, "Debe ser un valor numérico no nulo"]);
 		}
 
 		if(isset($firstRow[1])){
 			if(!preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])$/", $firstRow[1])){
 				$isValidRow = false;
-				array_push($detail_erros, [1, $lineCountWF, 2, "El campo debe tener el fomato AAAA-MM"]);	
+				array_push($detail_erros, [1, 0, 2, "El campo debe tener el fomato AAAA-MM"]);	
 			}
 		}else{
 			$isValidRow = false;
-			array_push($detail_erros, [1, $lineCountWF, 2, "El campo no debe ser nulo"]);
+			array_push($detail_erros, [1, 0, 2, "El campo no debe ser nulo"]);
 			
 		}
 
 		if(isset($firstRow[2])) {
 			if(!preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/", $firstRow[2])){
 				$isValidRow = false;
-				array_push($detail_erros, [1, $lineCountWF, 3, "El campo debe tener el formato AAAA-MM-DD"]);	
+				array_push($detail_erros, [1, 0, 3, "El campo debe tener el formato AAAA-MM-DD"]);	
 				
 			}
 		}else{
 			$isValidRow = false;
-			array_push($detail_erros, [1, $lineCountWF, 3, "El campo no debe ser nulo"]);
+			array_push($detail_erros, [1, 0, 3, "El campo no debe ser nulo"]);
 		}
 
 		if(isset($firstRow[3]) ){
 			if(!preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/", $firstRow[2])){
 				$isValidRow = false;
-				array_push($detail_erros, [1, $lineCountWF, 4, "El campo debe tener el formato AAAA-MM-DD"]);	
+				array_push($detail_erros, [1, 0, 4, "El campo debe tener el formato AAAA-MM-DD"]);	
 			}
 		}else{
 			$isValidRow = false;
-			array_push($detail_erros, [1, $lineCountWF, 4, "El campo no debe ser nulo"]);
+			array_push($detail_erros, [1, 0, 4, "El campo no debe ser nulo"]);
 		}
 
 		if(isset($firstRow[2]) && isset($firstRow[3])){
 			if (strtotime($firstRow[2]) > strtotime($firstRow[3]) ){
 				$isValidRow = false;
-				array_push($detail_erros, [1, $lineCountWF, '3 y 4', "El periodo incial debe ser menor que el periodo final"]);
+				array_push($detail_erros, [1, 0, '3 y 4', "El periodo incial debe ser menor que el periodo final"]);
 			}
 		}
 		
 
 		if(!isset($firstRow[4]) || !is_numeric($firstRow[4])){
 			$isValidRow = false;
-			array_push($detail_erros, [1, $lineCountWF, 5, "Debe ser un valor numérico no nulo"]);
+			array_push($detail_erros, [1, 0, 5, "Debe ser un valor numérico no nulo"]);
 		}
 
 	}
@@ -110,6 +110,7 @@ trait ToolsForFilesController {
 		//validacion campo 3
     	if(isset($entitySection[2])){
     		if(strlen($entitySection[2]) == 2){
+    			
     			$tipo_ident = TipoIdentEapb::where('id_tipo_ident',$entitySection[2])->first();
     			if(!$tipo_ident){
     				$isValidRow = false;
@@ -127,7 +128,7 @@ trait ToolsForFilesController {
 		//validacion campo 4
     	if(isset($entitySection[3])){
     		if(preg_match('/^\d{12}$/', $entitySection[3])){
-    			$tipo = Eapb::where('num_identificacion',$entitySection[3])->first();
+    			$tipo = Eapb::where('num_identificacion',intval($entitySection[3]))->first();
     			if(!$tipo){
     				$isValidRow = false;
 					array_push($detail_erros, [$lineCount, $lineCountWF, 4, "El  valor del campo no corresponde a un número de identificación de entidad registrado"]);
@@ -205,7 +206,7 @@ trait ToolsForFilesController {
 
 		//validación campo 9
     	if(isset($userSection[8])) {
-    		if(strlen($userSection[8]) > 12 || !is_numeric($userSection[2])) {
+    		if(strlen($userSection[8]) > 12 || !is_numeric($userSection[8])) {
     			$isValidRow = false;
 				array_push($detail_erros, [$lineCount, $lineCountWF, 9, "El campo debe un numerico con una logitud igual o menor a 12 dígitos."]);
     		}
@@ -213,7 +214,7 @@ trait ToolsForFilesController {
 			$isValidRow = false;
 			array_push($detail_erros, [$lineCount, $lineCountWF, 9, "El campo no debe ser nulo"]);
 		}
-
+		
 		//validación campo 10
     	if(isset($userSection[9])) {
     		if(strlen($userSection[9]) > 30 || $userSection[9] == '' ){
