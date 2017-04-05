@@ -19,7 +19,7 @@ class CreateEntidadesSectorSaludTable extends Migration {
 			$table->string('tipo_identificacion', 3)->nullable();
 			$table->string('num_identificacion', 12)->nullable();
 			$table->string('cod_habilitacion', 12)->nullable();
-			$table->string('nombre', 100)->nullable();
+			$table->string('nombre', 300)->nullable();
 			$table->integer('cod_mpio')->nullable();
 			$table->unique(['num_identificacion','cod_habilitacion'], 'entidades_sector_salud_uniquekey');
 		});

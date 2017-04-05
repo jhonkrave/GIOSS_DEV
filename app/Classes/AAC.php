@@ -16,6 +16,8 @@ use App\Models\UserIp;
 use App\Models\Registro;
 use App\Models\Eapb;
 use App\Models\Consultum;
+use App\Models\EntidadesSectorSalud;
+use Illuminate\Support\Facades\DB;
 
 
 class AAC {
@@ -56,22 +58,39 @@ class AAC {
 
 		try {
 
-      //se define en primera instancia el objeto archivo
-      //se inicializa el objeto archivo
-      $this->archivo = new Archivo();
-      $this->archivo->modulo_informacion = 'SGD';
-      $this->archivo->nombre = $this->fileName;
-      $this->archivo->version = $this->version;
-      $this->archivo->id_tema_informacion = 'AAC';
-      $this->archivo->save();
+      // se validad la existencia del archivo
+      $isValidFile = true;
+      $fileid = 0;
+
+      $exists = Archivo::where('nombre', $this->fileName)
+                ->where('version', $this->version)
+                ->first(); 
+
+      if($exists){
+        $isValidFile = false;
+        array_push($this->detail_erros, [0, 0, '', "El archivo ya se fue gestionado. Por favor actualizar la version"]);
+        $fileid = $exists->id_archivo_seq;
+      }else{
+          //se define en primera instancia el objeto archivo
+      
+          $this->archivo = new Archivo();
+          $this->archivo->modulo_informacion = 'SGD';
+          $this->archivo->nombre = $this->fileName;
+          $this->archivo->version = $this->version;
+          $this->archivo->id_tema_informacion = 'AAC';
+          $this->archivo->save();
+
+          $fileid = $this->archivo->id_archivo_seq;
+
+      }
 
       // se inicializa el objeto file_status 
       $this->file_status =  new FileStatus();
       $this->file_status->consecutive = $this->consecutive;
-      $this->file_status->archivoid = $this->archivo->id_archivo_seq;
+      $this->file_status->archivoid = $fileid;
       $this->file_status->current_status = 'WORKING';
 
-      $this->file_status->save();
+      $this->file_status->save();  
 
 
       $isValidFirstRow = true ;
@@ -83,35 +102,21 @@ class AAC {
       
 			$this->validateFirstRow($isValidFirstRow, $this->detail_erros, $lineCount, $firtsRow);
 
-      if ($isValidFirstRow) {
-        // se validad la existencia del archivo
-        $exists = Archivo::where('nombre', $this->nombre)
-                  ->where('version', $this->version)
-                  ->first(); 
 
-        if($exists){
-          $isValidRow = false;
-          array_push($this->detail_erros, [0, 1, '', "El archivo ya se fue gestionado. Por favor actualizar la version"]);
-        }else{
-          
-          $this->archivo->fecha_ini_periodo = strtotime($firtsRow[2]);
-          $this->archivo->fecha_fin_periodo = strtotime($firtsRow[3]);
+      if ($isValidFirstRow && $isValidFile) {
 
-          $entidad = EntidadesSectorSalud::where('cod_habilitacion', $firstRow[0])->first();
-          $this->archivo->id_entidad = $entidad->id_entidad;
-          $this->archivo->numero_registros = $firtsRow[4];
-          
-          $this->archivo->save();
-
-        }
-      }
-
-      $lineCount = 1;
-      $lineCountWF = 1;
-
-      if ($isValidFirstRow) {
+        //se adicionan terminan de definir los prametros el archivo
+        $this->archivo->fecha_ini_periodo = strtotime($firtsRow[2]);
+        $this->archivo->fecha_fin_periodo = strtotime($firtsRow[3]);
+        $entidad = EntidadesSectorSalud::where('cod_habilitacion', $firtsRow[0])->first();
+        $this->archivo->id_entidad = $entidad->id_entidad;
+        $this->archivo->numero_registros = $firtsRow[4];
         
-        while($data = fgetcsv($this->handle, 0, "|")){
+        $this->archivo->save();
+
+        //se valida cada línea
+        while($data = fgetcsv($this->handle, 0, "|"))
+        {
           $isValidRow = true;
           $this->validateEntitySection($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,0,6));
           $this->validateUserSection($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,6,9,true));
@@ -125,23 +130,37 @@ class AAC {
           }else{
             //save info
             
-            // se almacena la informacion correpondiente al paciente
-            $exists = UserIp::where('num_identenficacion',$data[8])->first();
-            $useripsid = 0;
+            //se valida duplicidad en la informacion
+            $exists = DB::table('consulta')
+            ->join('registro', 'consulta.id_registro', '=', 'registro.id_registro_seq')
+            ->join('archivo', 'registro.id_registro_seq', '=', 'archivo.id_archivo_seq')
+            ->join('eapbs', 'registro.id_registro_seq', '=', 'eapbs.id_entidad')
+              ->where('archivo.fecha_ini_periodo', strtotime($firtsRow[2]))
+              ->where('archivo.fecha_fin_periodo', strtotime($firtsRow[3]))
+              ->where('eapbs.num_identificacion', $data[3])
+              ->where('consulta.fecha_consulta', $data[15])
+              ->where('consulta.ambito_consulta', $data[16])
+              ->where('consulta.tipo_codificacion', $data[18])
+              ->where('consulta.cod_consulta', $data[17])
+              ->where('consulta.cod_consulta_esp', $data[19])
+              ->where('consulta.cod_diagnostico_principal', $data[21])
+              ->where('consulta.cod_diagnostico_rel1', $data[23])
+              ->where('consulta.cod_diagnostico_rel2', $data[25])
+              ->where('consulta.tipo_diagnostico_principal', $data[27])
+              ->where('consulta.finalidad_consulta', $data[28])
+            ->firts();
+
             if($exists){
-              $exists->num_historia_clinica = $data[6];
-              $exists->tipo_identificacion = $data[7];
-              $exists->primer_apellido = $data[9];
-              $exists->primer_nombre = $data[11];
-              $exists->segundo_nombre = $data[12];
-              $exists->segundo_apellido = $data[10];
-              $exists->fecha_nacimiento = $data[13];
-              $exists->sexo = $data[14];
-
-              $exists->save();
-              $useripsid = $exists->id_user;
-
-            }else{
+              
+              array_push($this->detail_erros, [$lineCount, $lineCountWF, '', "Registro duplicado"]);
+              array_push($this->wrong_rows, $data);
+              $lineCount++;
+              $lineCountWF++;
+            }else
+            {
+              // se almacena la informacion correpondiente al paciente
+        
+              $useripsid = 0;
               $ipsuser = new UserIp();
               $ipsuser->num_historia_clinica = $data[6];
               $ipsuser->tipo_identificacion = $data[7];
@@ -155,46 +174,49 @@ class AAC {
 
               $ipsuser->save();
               $useripsid = $ipsuser->id_user;
+              
+
+              //se alamcena la informacion de la relacion registro
+              $register = new Registro();
+              $register->id_archivo = $this->archivo->id_archivo_seq;
+              $register->id_user = $useripsid;
+
+              $eapb  = Eapb::where('num_identificacion', $data[3])
+                              ->where('cod_eapb', $data[4])->first();
+
+              $register->id_eapb = $eapb->id_entidad;
+              $register->save();
+
+              //se almacena la información correpondiente a la consulta
+              $consult = new Consultum();
+              $consult->id_registro = $register->id_registro_seq;
+              $consult->fecha_consulta = $data[15];
+              $consult->ambito_consulta = $data[16];
+              $consult->tipo_codificacion = $data[18];
+              $consult->cod_consulta = $data[17];
+              $consult->cod_consulta_esp = $data[19];
+              $consult->cod_diagnostico_principal = $data[21];
+              $consult->cod_diagnostico_rel1 = $data[23];
+              $consult->cod_diagnostico_rel2 = $data[25];
+              $consult->tipo_diagnostico_principal = $data[27];
+              $consult->finalidad_consulta = $data[28];
+
+              $consult->save();
+
+              
+
+              //se actualiza el porcentaje
+              $register_num = $this->archivo->numero_registros;
+              $Porcent =  $this->file_status->porcent;
+              $currentPorcent = ( $lineCount  / $register_num)*100;
+              $dif = $currentPorcent -  $Porcent;
+              if ($dif >= 1){
+                $this->file_status->porcent = $currentPorcent;
+                $this->file_status->save();
+              }
+              $lineCount++;
             }
-
-            //se alamcena la informacion de la relacion registro
-            $register = new Registro();
-            $register->id_archivo = $this->archivo->id_archivo_seq;
-            $register->id_user = $useripsid;
-
-            $eapb  = Eapb::where('num_identificacion', $data[3])
-                            ->where('cod_eapb', $data[4])->first();
-
-            $register->id_eapb = $eapb->id_entidad;
-            $register->save();
-
-            //se almacena la información correpondiente a la consulta
-            $consult = new Consultum();
-            $consult->id_registro = $register->id_registro_seq;
-            $consult->fecha_consulta = $data[15];
-            $consult->ambito_consulta = $data[16];
-            $consult->tipo_codificacion = $data[18];
-            $consult->cod_consulta = $data[17];
-            $consult->cod_consulta_esp = $data[19];
-            $consult->cod_diagnostico_principal = $data[21];
-            $consult->cod_diagnostico_rel1 = $data[23];
-            $consult->cod_diagnostico_rel2 = $data[25];
-            $consult->tipo_diagnostico_principal = $data[27];
-            $consult->finalidad_consulta = $data[28];
-
-            $consult->save();
-
-            $lineCount++;
-
-            //se actualiza el porcentaje
-            $register_num = $this->archivo->numero_registros;
-            $Porcent =  $this->file_status->porcent;
-            $currentPorcent = ( ($lineCount - 1)  / $register_num)*100; // -1 porque la primera línea no se cuenta
-            $dif = $currentPorcent -  $Porcent;
-            if ($dif >= 1){
-              $this->file_status->porcent = $currentPorcent;
-              $this->file_status->save();
-            }
+            
           }
         }
 

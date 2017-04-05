@@ -1,11 +1,12 @@
 $(document).ready(function(){
 	var count_files = 0;
+	var interval = null;
 	$('#add_file').on('click', function(){
 
 		$('#alert').fadeOut();
 		count_files+=1;
 
-		var html = '<div class="form-group well col-md-6" id="particular_file_div"> <button type="button" id="close_div_file" class="close" aria-hidden="true">&times;</button> <label for="tipo_file" class="form-control-label">Tipo de archivo No.'+count_files+'</label><select id="tipo_file" name="tipo_file[]"><option value="AAC">Archivo Atencion en Consulta AAC</option> <option value="AEH" >Archivo Egresos Hospitalarios AEH</option value="AMS"><option>Archivo Medicamentos Suministrados AMS</option><option value="AVA">Archivo Vacunas Aplicadas AVA</option><option value="APS">Archivo Procedimientos APS</option></select><div><input type="file" name="archivo[]" id="archivo"  accept=".txt"></div></div>';
+		var html = '<div class="form-group well " id="particular_file_div"> <button type="button" id="close_div_file" class="close" aria-hidden="true">&times;</button> <label for="tipo_file" class="form-control-label">Tipo de archivo No.'+count_files+'</label><select id="tipo_file" name="tipo_file[]"><option value="AAC">Archivo Atencion en Consulta AAC</option> <option value="AEH" >Archivo Egresos Hospitalarios AEH</option value="AMS"><option>Archivo Medicamentos Suministrados AMS</option><option value="AVA">Archivo Vacunas Aplicadas AVA</option><option value="APS">Archivo Procedimientos APS</option></select><div><input type="file" name="archivo[]" id="archivo"  accept=".txt"></div></div>';
 		$('#files_div').append(html);
 	});
 
@@ -201,14 +202,14 @@ function uploadFile() {
         contentType: false,
         processData: false,
         beforeSend: function() {
-           
+           $('#divgif').append(loadGif);
         },
         success : function (msj) {
             
             console.log('consecutivo: '+msj);
-            setInterval(function(){
+            interval = setInterval(function(){
 				consultStatusFiles(msj)
-			}, 5000);
+			}, 15000);
         },
         error: function (msj) {
             console.log(msj);
@@ -220,23 +221,60 @@ function uploadFile() {
 
 function consultStatusFiles(consecutive) {
 
-	data = new Array();
-	data.push({name:'consecutive', value:consecutive});
+
 	$.ajax({
-        url: route,
-        data: data,
+        url: status_file_route,
+        data: {'consecutive':consecutive},
         type: 'GET',
         dataType: 'json',
         cache: false,
-        // parametros necesarios para la carga de archivos
-        contentType: false,
-        processData: false,
-        beforeSend: function() {
-           
-        },
         success : function (msj) {
+        	console.log(msj);
+            $('#div_file_statuses').empty();
+            $('#div_file_statuses').append(' <h3>Estado de archivos</h3>')
             
-            console.log(msj);
+            var finish = true;
+            for (x in msj){
+            	if (msj[x].current_status == 'COMPLETED'){
+            		finish = true;
+            	}else{
+            		finish = false;
+            	}
+
+            	var html = '<div class="form-group well "> <div class="row"> <label class="col-md-4">Nombre:</label> <label class="col-md-8" style="display: inline-block; width: 300px; overflow: hidden; text-overflow: ellipsis;">'+msj[x].nombre+'0'+msj[x].version+'.txt</label></div> <div class="row"> <label class="col-md-4">Estado:</label> <label class="col-md-8">'+msj[x].current_status+'</label></div>';
+
+            	html += '<div class="row"> <label class="col-md-4">% cargado: </label> <label class="col-md-8">'+msj[x].porcent+'%</label></div>';
+            	if(msj[x].current_status == 'COMPLETED')
+            	{
+            		switch(msj[x].final_status)
+            		{
+	            		case 'REGULAR':
+	            			html+= '<div class="row"> <label class="col-md-4">Cal. Global:</label> <label class="col-md-8" >REGULAR</label></div>';
+	            			break;
+	            		case 'SUCCESS':
+	            			html+= '<div class="row"> <label class="col-md-4">Cal. Global:</label> <label class="col-md-8">EXITOSO</label></div>';
+	            			break;
+	            		case 'FAILURE':
+	            			html+= '<div class="row"> <label class="col-md-4">Cal. Global:</label> <label class="col-md-8">FALLIDO</label></div>';
+	            			break;
+	            	}
+
+	            	html+= '<div class="row"> <label class="col-md-4">Detalle:</label> <a href="'+msj[x].zipath+'" class="col-md-8">Descargar</a></div>';
+
+            	}
+            	
+            	html+= ' </div>';
+            	$('#div_file_statuses').append(html);
+            }
+
+            if(finish){
+            	$('#divgif').empty();
+            	$('#files_div').empty();
+            	clearInterval(interval);
+            }
+
+            if (!$('#div_file_statuses').is(':visible')) $('#div_file_statuses').fadeIn();
+            
         },
         error: function (msj) {
             console.log(msj);

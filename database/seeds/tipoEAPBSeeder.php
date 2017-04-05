@@ -83,6 +83,11 @@ class tipoEAPBSeeder extends Seeder
         ]);
 
         TipoEapb::create([
+            'id_tipo_ent' =>'18',
+            'descripcion' => 'Entidades de Regimen de Excepcion'
+        ]);
+
+        TipoEapb::create([
             'id_tipo_ent' =>'',
             'descripcion' => 'No definido'
         ]);

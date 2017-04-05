@@ -23,9 +23,15 @@ class eapsSeeder extends Seeder
             while ($row = fgetcsv($handle,0 ,','))
             {
                 if(!$header)
+                {
                     $header = $row;
+                }
                 else
-                    $data[] = array_combine($header, $row);
+                {
+                   if($row[1] == '') $row[1] = 'SD';
+                    $data[] = array_combine($header, $row); 
+                }
+                    
             }
             fclose($handle);
         }

@@ -30,8 +30,8 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="row" id="files_div">
-                            <button type="button" id="add_file" class="col-md-3 btn btn-success btn-m">
+                        <div class="row" >
+                            <button type="button" id="add_file"  class="col-md-3 btn btn-success btn-m">
                               <span class="glyphicon glyphicon-plus-sign"></span> Adicionar Archivo
                             </button>
                             <button type="button" id="btnUpload" class="col-md-3 col-md-offset-6 btn btn-info btn-m">
@@ -48,6 +48,18 @@
                             </div>
                             
                         </div>
+
+                        <div class="row" id="divgif" align="center">
+                            
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6" id="files_div">
+                                
+                            </div>
+                            <div class="col-md-6" id="div_file_statuses" style="display:none;">
+                               
+                            </div>
+                        </div>
                     </form>
                     
                 </div>
@@ -57,7 +69,9 @@
     </div>
 </div>
 <script>
-    var route = "{{ route('uploading') }}";
+    var route = "{{ route('uploading') }}"; 
+    var status_file_route = "{{ route('status_files') }}";
+    var loadGif = ' <img src="{{asset("images/30.gif")}}"/>'
 </script>
 {{ Html::script(asset("js/uploadfiles.js")) }}
 @endsection

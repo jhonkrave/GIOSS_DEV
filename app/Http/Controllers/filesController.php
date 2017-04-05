@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use App\Classes\AAC;
 use App\Models\FileStatus;
+use Illuminate\Support\Facades\DB;
 
 class filesController extends Controller
 {
@@ -45,12 +46,11 @@ class filesController extends Controller
     {   
 
         $consecutive = time();
-        echo json_encode($consecutive);
+        
         
         $files = $request->file('archivo');
         $fileTypes = $request->tipo_file;
-        
-        
+        echo json_encode($consecutive);
         
         
         $count = 0;
@@ -100,8 +100,10 @@ class filesController extends Controller
      */
     public function show(Request $request)
     {
-        
-        $result = FileStatus::where('consecutive', $request->consecutive);
+        //dd($request->consecutive);
+        $result = DB::table('file_statuses')
+                    ->join('archivo','archivo.id_archivo_seq','=','file_statuses.archivoid')
+            ->where('file_statuses.consecutive', $request->consecutive)->get();
         echo json_encode($result);
     }
 
