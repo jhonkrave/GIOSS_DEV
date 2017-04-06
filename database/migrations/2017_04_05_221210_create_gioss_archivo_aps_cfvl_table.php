@@ -21,7 +21,7 @@ class CreateGiossArchivoApsCfvlTable extends Migration {
 			$table->bigInteger('numero_registro');
 			$table->text('contenido_registro_validado');
 			$table->bigInteger('fecha_hora_validacion');
-			$table->unique(['fecha_periodo_inicio','fecha_periodo_fin','nombre_archivo','numero_registro'], 'gioss_archivo_aps_cfvl_pkey');
+			$table->unique(['fecha_periodo_inicio','fecha_periodo_fin','nombre_archivo','numero_registro'], 'gioss_archivo_aps_cfvl_uniquekey');
 		});
 	}
 

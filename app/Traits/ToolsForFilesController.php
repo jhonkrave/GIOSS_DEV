@@ -10,6 +10,7 @@ use App\Models\GenerosUser;
 use App\Models\Eapb;
 use App\Models\TipoEapb;
 use App\Models\TipoIdentEapb;
+use App\Models\FileStatus;
 
 trait ToolsForFilesController {
 
@@ -323,10 +324,7 @@ trait ToolsForFilesController {
 	    $zip->close();
 	}
 
-	function validateFileName(&$isValidRow, &$detail_erros, $fileName, $firstRow){
-		$fecha_ini = substr($fileName,15,8);
-		$fecha_fin = substr($fileName,23,8);
-	}
+	
 
 
 

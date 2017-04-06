@@ -23,8 +23,8 @@ use Illuminate\Support\Facades\DB;
 class AVA {
 
 	use ToolsForFilesController;
-	private $handle;
-	private $folder;
+  private $handle;
+  private $folder;
   private $fileName;
   private $version;
   private $consecutive;
@@ -37,7 +37,7 @@ class AVA {
 
 
   function __construct($pathfolder, $fileName,$consecutive) {
-    if(!($this->handle = fopen($pathfolder.$fileName, 'r'))) throw new Exception("Error al abrir el archivo AVA");
+    if(!($this->handle = fopen($pathfolder.$fileName, 'r'))) throw new Exception("Error al abrir el archivo AEH");
     //dd($fileName);
     $this->folder = $pathfolder;
 
@@ -56,7 +56,7 @@ class AVA {
 
   public function manageContent() {
 
-		try {
+    try {
 
       // se validad la existencia del archivo
       $isValidFile = true;
@@ -77,7 +77,7 @@ class AVA {
           $this->archivo->modulo_informacion = 'SGD';
           $this->archivo->nombre = $this->fileName;
           $this->archivo->version = $this->version;
-          $this->archivo->id_tema_informacion = 'AVA';
+          $this->archivo->id_tema_informacion = 'AEH';
           $this->archivo->save();
 
           $fileid = $this->archivo->id_archivo_seq;
@@ -96,12 +96,10 @@ class AVA {
       $isValidFirstRow = true ;
       
       
-      $lineCount = 1;
-      $lineCountWF = 1;
-			$firtsRow = fgetcsv($this->handle, 0, "|");
       
-			$this->validateFirstRow($isValidFirstRow, $this->detail_erros, $lineCount, $firtsRow);
-
+      $firtsRow = fgetcsv($this->handle, 0, "|");
+      
+      $this->validateFirstRow($isValidFirstRow, $this->detail_erros, $firtsRow);
 
       if ($isValidFirstRow && $isValidFile) {
 
@@ -111,25 +109,30 @@ class AVA {
         $entidad = EntidadesSectorSalud::where('cod_habilitacion', $firtsRow[0])->first();
         $this->archivo->id_entidad = $entidad->id_entidad;
         $this->archivo->numero_registros = $firtsRow[4];
-        
         $this->archivo->save();
 
+        $this->file_status->total_registers =  $firtsRow[4];
+        $this->file_status->save();
+
+        $lineCount = 2;
+        $lineCountWF = 2;
         //se valida cada línea
-        while($data = fgetcsv($this->handle, 0, "|"))
+        while($data = fgetcsv($this->handle, 10000, "|"))
         {
           $isValidRow = true;
           $this->validateEntitySection($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,0,6));
           $this->validateUserSection($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,6,9,true));
-          $this->validateAVA($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,15,14,true));
+          $this->validateAEH($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,15,14,true));
 
           if(!$isValidRow){
-            //dd('entro');
+            
+            array_push($this->wrong_rows, $data);
+            $this->updateStatusFile($lineCount); //se acatualiza la lienea ya tratada
             $lineCount++;
             $lineCountWF++;
-            array_push($this->wrong_rows, $data);
+            continue;
           }else{
-            //save info
-            
+              
             //se valida duplicidad en la informacion
             $exists = DB::table('consulta')
             ->join('registro', 'consulta.id_registro', '=', 'registro.id_registro_seq')
@@ -154,11 +157,12 @@ class AVA {
               
               array_push($this->detail_erros, [$lineCount, $lineCountWF, '', "Registro duplicado"]);
               array_push($this->wrong_rows, $data);
-              $lineCount++;
+              $this->updateStatusFile($lineCount);
               $lineCountWF++;
+              $lineCount++;
+              continue;
             }else
             {
-              // se almacena la informacion correpondiente al paciente
         
               $useripsid = 0;
               $ipsuser = new UserIp();
@@ -203,32 +207,118 @@ class AVA {
 
               $consult->save();
 
-              
-
-              //se actualiza el porcentaje
-              $register_num = $this->archivo->numero_registros;
-              $Porcent =  $this->file_status->porcent;
-              $currentPorcent = ( $lineCount  / $register_num)*100;
-              $dif = $currentPorcent -  $Porcent;
-              if ($dif >= 1){
-                $this->file_status->porcent = $currentPorcent;
-                $this->file_status->save();
-              }
-              $lineCount++;
-            }
-            
+            }  
           }
+          $this->updateStatusFile($lineCount);
+          $lineCount++;
         }
 
+        fclose($this->handle);
         $this->generateFiles();
 
       }else{
         $this->generateFiles();
       }
     
-		} catch (\Exception $e) {
-		  print_r($e->getMessage());
-		}
+    } catch (\Exception $e) {
+      print_r($e->getMessage());
+    }
+
+  }
+
+  private function updateStatusFile($lineCount)
+  {
+    //se actualiza el porcentaje
+    $register_num = $this->archivo->numero_registros;
+    $Porcent =  $this->file_status->porcent;
+    $currentPorcent = ( ($lineCount - 1)  / $register_num)*100;
+
+    Log::info("Número de registros " . $register_num);
+    Log::info("porcentaje almacenado " . $Porcent);
+    Log::info("porcentaje actual " . $currentPorcent);
+
+    $dif = $currentPorcent -  $Porcent;
+    if ($dif >= 1){
+      $this->file_status->current_line = $lineCount - 1;
+      $this->file_status->porcent = intval($currentPorcent);
+      $this->file_status->save();
+    }
+    return true;
+  }
+
+  private function generateFiles() {
+
+    if(count($this->wrong_rows) > 0){
+      
+      $filewrongname = $this->folder.'RegistrosErroneos';
+      //dd('entro');
+      $wrongfile = fopen($filewrongname, 'w');                              
+      fprintf($wrongfile, chr(0xEF).chr(0xBB).chr(0xBF)); // darle formato unicode utf-8
+      foreach ($this->wrong_rows as $row) {
+          fputcsv($wrongfile, $row,'|');              
+      }
+      fclose($wrongfile);
+      
+      
+    }
+
+    if(count($this->detail_erros) > 1){
+      //----se genera el archivo de detalles de error
+      $detailsFilename =  $this->folder.'DetallesErrores';
+      
+      $detailsFileHandler = fopen($detailsFilename, 'w');
+      fprintf($detailsFileHandler, chr(0xEF).chr(0xBB).chr(0xBF)); // darle formato unicode utf-8
+      foreach ($this->detail_erros as $row) {
+          fputcsv($detailsFileHandler, $row,'|');              
+      }
+      fclose($detailsFileHandler);
+    }
+
+    if(count($this->success_rows) > 0){
+        $arrayIdsFilename = $this->folder.'registrosExitosos';
+        
+        $arrayIdsFileHandler = fopen($arrayIdsFilename, 'w');
+        fprintf($arrayIdsFileHandler, chr(0xEF).chr(0xBB).chr(0xBF)); // darle formato unicode utf-8
+        foreach ($this->success_rows as $row) {
+            fputcsv($arrayIdsFileHandler, $row, '|');              
+        }
+        fclose($arrayIdsFileHandler);
+        
+
+        
+        if(count($this->wrong_rows) > 0){
+          $this->file_status->final_status = 'REGULAR';
+          
+        }else{
+          $this->file_status->final_status = 'SUCCESS';
+        }
+        
+        $zipname = 'detalles'.time().'.zip';
+        $zipsavePath = storage_path('archivos').'/../../public/zips/'.$zipname;
+        $this->createZip($this->folder, $zipname);
+        
+        $this->file_status->zipath = asset('zips/'.$zipname);
+        $this->file_status->current_status = 'COMPLETED';
+        $this->file_status->save();
+
+        return true;
+        
+    }else{
+        
+        $this->file_status->final_status = 'FAILURE';
+
+        
+        $zipname = 'detalles'.time().'.zip';
+        $zipsavePath = storage_path('archivos').'/../../public/zips/'.$zipname;
+        //dd($zipsavePath);
+        $this->createZip($this->folder, $zipsavePath);
+        
+        $this->file_status->zipath = asset('zips/'.$zipname);
+        $this->file_status->current_status = 'COMPLETED';
+        $this->file_status->save();
+
+        return true;
+    }
 
   }
 
@@ -452,83 +542,5 @@ class AVA {
       array_push($detail_erros, [$lineCount, $lineCountWF, 29, "El campo no debe ser nulo"]);
     }
   }
-
-  private function generateFiles() {
-
-    if(count($this->wrong_rows) > 0){
-      
-      $filewrongname = $this->folder.'RegistrosErroneos';
-      //dd('entro');
-      $wrongfile = fopen($filewrongname, 'w');                              
-      fprintf($wrongfile, chr(0xEF).chr(0xBB).chr(0xBF)); // darle formato unicode utf-8
-      foreach ($this->wrong_rows as $row) {
-          fputcsv($wrongfile, $row,'|');              
-      }
-      fclose($wrongfile);
-      
-      
-    }
-
-    if(count($this->detail_erros) > 1){
-      //----se genera el archivo de detalles de error
-      $detailsFilename =  $this->folder.'DetallesErrores';
-      
-      $detailsFileHandler = fopen($detailsFilename, 'w');
-      fprintf($detailsFileHandler, chr(0xEF).chr(0xBB).chr(0xBF)); // darle formato unicode utf-8
-      foreach ($this->detail_erros as $row) {
-          fputcsv($detailsFileHandler, $row,'|');              
-      }
-      fclose($detailsFileHandler);
-    }
-
-    if(count($this->success_rows) > 0){
-        $arrayIdsFilename = $this->folder.'registrosExitosos';
-        
-        $arrayIdsFileHandler = fopen($arrayIdsFilename, 'w');
-        fprintf($arrayIdsFileHandler, chr(0xEF).chr(0xBB).chr(0xBF)); // darle formato unicode utf-8
-        foreach ($this->success_rows as $row) {
-            fputcsv($arrayIdsFileHandler, $row, '|');              
-        }
-        fclose($arrayIdsFileHandler);
-        
-
-        
-        if(count($this->wrong_rows) > 0){
-          $this->file_status->final_status = 'REGULAR';
-          
-        }else{
-          $this->file_status->final_status = 'SUCCESS';
-        }
-        
-        $zipname = 'detalles'.time().'.zip';
-        $zipsavePath = storage_path('archivos').'/../../public/zips/'.$zipname;
-        $this->createZip($this->folder, $zipname);
-        
-        $this->file_status->zipath = asset('zips/'.$zipname);
-        $this->file_status->current_status = 'COMPLETED';
-        $this->file_status->save();
-
-        return true;
-        
-    }else{
-        
-        $this->file_status->final_status = 'FAILURE';
-
-        
-        $zipname = 'detalles'.time().'.zip';
-        $zipsavePath = storage_path('archivos').'/../../public/zips/'.$zipname;
-        //dd($zipsavePath);
-        $this->createZip($this->folder, $zipsavePath);
-        
-        $this->file_status->zipath = asset('zips/'.$zipname);
-        $this->file_status->current_status = 'COMPLETED';
-        $this->file_status->save();
-
-        return true;
-    }
-
-  }
-
-
 
 }
