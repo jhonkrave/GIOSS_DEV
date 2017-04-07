@@ -17,7 +17,7 @@ class eapsSeeder extends Seeder
     	$header = NULL;
        	$data = array();
        	$filename = storage_path('seeders').'/eapbs.csv';
-        //factory(tipo_entidad::class,4)->create(); (([0-9]+[0-9]*|[S|P|O|N|C])+[\,])([\s]*)([\,]([0-9]|[a-zA-Z])*[\,][0-9]+[\,])
+
         if ($handle = fopen($filename,'r'))
         {
             while ($row = fgetcsv($handle,0 ,','))

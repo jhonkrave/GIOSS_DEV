@@ -4,20 +4,18 @@ namespace App\Classes;
 
 
 use App\Traits\ToolsForFilesController;
-use App\Models\Ambito;
-use App\Models\ConsultaCup;
-use App\Models\ConsultaHomologo;
-use App\Models\DiagnosticoCiex;
-use App\Models\TipoDiagnostico;
-use App\Models\FinalidadConsultum;
 use App\Models\FileStatus;
 use App\Models\Archivo;
 use App\Models\UserIp;
 use App\Models\Registro;
 use App\Models\Eapb;
-use App\Models\Consultum;
 use App\Models\EntidadesSectorSalud;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
+use App\Models\Vacunacion;
+use App\Models\VacunaCup;
+use App\Models\VacunaHomologo;
 
 
 class AVA {
@@ -134,23 +132,17 @@ class AVA {
           }else{
               
             //se valida duplicidad en la informacion
-            $exists = DB::table('consulta')
-            ->join('registro', 'consulta.id_registro', '=', 'registro.id_registro_seq')
+            $exists = DB::table('vacunacion')
+            ->join('registro', 'vacunacion.id_registro', '=', 'registro.id_registro_seq')
             ->join('archivo', 'registro.id_registro_seq', '=', 'archivo.id_archivo_seq')
             ->join('eapbs', 'registro.id_registro_seq', '=', 'eapbs.id_entidad')
               ->where('archivo.fecha_ini_periodo', strtotime($firtsRow[2]))
               ->where('archivo.fecha_fin_periodo', strtotime($firtsRow[3]))
               ->where('eapbs.num_identificacion', $data[3])
-              ->where('consulta.fecha_consulta', $data[15])
-              ->where('consulta.ambito_consulta', $data[16])
-              ->where('consulta.tipo_codificacion', $data[18])
-              ->where('consulta.cod_consulta', $data[17])
-              ->where('consulta.cod_consulta_esp', $data[19])
-              ->where('consulta.cod_diagnostico_principal', $data[21])
-              ->where('consulta.cod_diagnostico_rel1', $data[23])
-              ->where('consulta.cod_diagnostico_rel2', $data[25])
-              ->where('consulta.tipo_diagnostico_principal', $data[27])
-              ->where('consulta.finalidad_consulta', $data[28])
+              ->where('vacunacion.fecha_aplicacion', $data[15])
+              ->where('vacunacion.tipo_codificacion', $data[17])
+              ->where('vacunacion.codigo_tipo_vacuna', $data[16])
+              ->where('vacunacion.numero_dosis', $data[18])
             ->firts();
 
             if($exists){
@@ -164,20 +156,35 @@ class AVA {
             }else
             {
         
-              $useripsid = 0;
-              $ipsuser = new UserIp();
-              $ipsuser->num_historia_clinica = $data[6];
-              $ipsuser->tipo_identificacion = $data[7];
-              $ipsuser->num_identenficacion = $data[8];
-              $ipsuser->primer_apellido = $data[9];
-              $ipsuser->primer_nombre = $data[11];
-              $ipsuser->segundo_nombre = $data[12];
-              $ipsuser->segundo_apellido = $data[10];
-              $ipsuser->fecha_nacimiento = $data[13];
-              $ipsuser->sexo = $data[14];
+              $exists = UserIp::where('num_identenficacion', $data[8])->first();
 
-              $ipsuser->save();
-              $useripsid = $ipsuser->id_user;
+              $createNewUserIp = true;
+              $useripsid = 0;
+
+              if($exists){
+                if($exists->num_historia_clinica ==  $data[6] || $exists->tipo_identificacion ==  $data[7] || $exists->primer_apellido ==  $data[9] || $exists->segundo_apellido ==  $data[10] || $exists->primer_nombre ==  $data[11] || $exists->segundo_nombre ==  $data[12] || $exists->fecha_nacimiento ==  $data[13] || $exists->sexo ==  $data[14])
+                {
+                  $createNewUserIp = false;
+                  $useripsid = $exists->id_user;
+                }
+              }
+
+              if($createNewUserIp)
+              {
+                $ipsuser = new UserIp();
+                $ipsuser->num_historia_clinica = $data[6];
+                $ipsuser->tipo_identificacion = $data[7];
+                $ipsuser->num_identenficacion = $data[8];
+                $ipsuser->primer_apellido = $data[9];
+                $ipsuser->segundo_apellido = $data[10];
+                $ipsuser->primer_nombre = $data[11];
+                $ipsuser->segundo_nombre = $data[12];
+                $ipsuser->fecha_nacimiento = $data[13];
+                $ipsuser->sexo = $data[14];
+
+                $ipsuser->save();
+                $useripsid = $ipsuser->id_user;
+              }
               
 
               //se alamcena la informacion de la relacion registro
@@ -191,21 +198,15 @@ class AVA {
               $register->id_eapb = $eapb->id_entidad;
               $register->save();
 
-              //se almacena la información correpondiente a la consulta
-              $consult = new Consultum();
-              $consult->id_registro = $register->id_registro_seq;
-              $consult->fecha_consulta = $data[15];
-              $consult->ambito_consulta = $data[16];
-              $consult->tipo_codificacion = $data[18];
-              $consult->cod_consulta = $data[17];
-              $consult->cod_consulta_esp = $data[19];
-              $consult->cod_diagnostico_principal = $data[21];
-              $consult->cod_diagnostico_rel1 = $data[23];
-              $consult->cod_diagnostico_rel2 = $data[25];
-              $consult->tipo_diagnostico_principal = $data[27];
-              $consult->finalidad_consulta = $data[28];
+              //se almacena la información correpondiente a la vacunacion
+              $vacunacion = new Vacunacion();
+              $vacunacion->id_registro = $register->id_registro_seq;
+              $vacunacion->fecha_aplicacion = $data[15];
+              $vacunacion->tipo_codificacion = $data[17];
+              $vacunacion->codigo_tipo_vacuna = $data[16];
+              $vacunacion->numero_dosis = $data[18];
 
-              $consult->save();
+              $vacunacion->save();
 
             }  
           }
@@ -338,14 +339,9 @@ class AVA {
 
     //validacion campo 17
     if(isset($consultSection[16])) {
-        if(strlen($consultSection[16]) != 1){
+        if(strlen($consultSection[16]) != 8){
           $isValidRow = false;
-        array_push($detail_erros, [$lineCount, $lineCountWF, 17, "El campo de tener una longitud igual a 1"]);
-        }else{
-          $exists = Ambito::where('ambito',$consultSection[16])->first();
-          if(!$exists){
-            array_push($detail_erros, [$lineCount, $lineCountWF, 17, "El valor del campo no correponde a un Ambito valido"]);
-          }
+        array_push($detail_erros, [$lineCount, $lineCountWF, 17, "El campo de tener una longitud igual a 8"]);
         }
     }else{
       $isValidRow = false;
@@ -354,193 +350,50 @@ class AVA {
 
     //validacion campo 18
     if(isset($consultSection[17])) {
-        if(strlen($consultSection[17]) != 8){
+        if(!is_numeric($consultSection[17]) || strlen($consultSection[17]) != 1){
           $isValidRow = false;
-        array_push($detail_erros, [$lineCount, $lineCountWF, 18, "El campo debe tener una longitud de 8 caracteres"]);
+        array_push($detail_erros, [$lineCount, $lineCountWF, 18, "El campo debe ser un número de un dígito"]);
+        }else{
+          switch ($consultSection[17]) {
+            case '1':
+              $exists = VacunaCup::where('codigo_tipo_vacuna',$consultSection[16])->first();
+              if(!$exists){
+                $isValidRow = false;
+                array_push($detail_erros, [$lineCount, $lineCountWF, 17, "El valor del campo no correspondea un codigo de vacuna cups válido"]);
+              }
+              break;
+            
+            case '4':
+              $exists = VacunaHomologo::where('codigo_tipo_vacuna',$consultSection[16])->first();
+              if(!$exists){
+                $isValidRow = false;
+                array_push($detail_erros, [$lineCount, $lineCountWF, 17, "El valor del campo no corresponde a un codigo de vacuna homologa válida"]);
+              }
+              break;
+          }
+
         }
     }else{
       $isValidRow = false;
       array_push($detail_erros, [$lineCount, $lineCountWF, 18, "El campo no debe ser nulo"]);
     }
 
-    //validacion campo 20
-    if(isset($consultSection[19])) {
-        if(!preg_match("/^\d{2}$/", $consultSection[19])){
-          $isValidRow = false;
-        array_push($detail_erros, [$lineCount, $lineCountWF, 20, "El campo debe terner un vlor numérico de 2 dígitos"]);
-        }
-    }else{
-      $isValidRow = false;
-      array_push($detail_erros, [$lineCount, $lineCountWF, 20, "El campo no debe ser nulo"]);
-    }
+    
 
-    //validacion campo 18(2), 19(3) y 20(4)
+    //validacion campo 19
     if(isset($consultSection[18])) {
-        if(!is_numeric($consultSection[18]) || strlen($consultSection[18]) != 1){
+        if(!is_numeric($consultSection[18]) && ($consultSection[18] > 5 || $consultSection[18] < 1) ){
           $isValidRow = false;
-        array_push($detail_erros, [$lineCount, $lineCountWF, 19, "El campo debe ser un número de un dígito"]);
-        }else{
-          switch ($consultSection[3]) {
-            case '1':
-              $exists = ConsultaCup::where('cod_consulta',$consultSection[17])->first();
-              if(!$exists){
-                $isValidRow = false;
-                array_push($detail_erros, [$lineCount, $lineCountWF, 18, "El valor del campo no correspondea un codigo de consutlas cups válido"]);
-              }
-              break;
-            
-            case '4':
-              $exists = ConsultaHomologo::where('cod_consulta',$consultSection[19])->first();
-              if(!$exists){
-                $isValidRow = false;
-                array_push($detail_erros, [$lineCount, $lineCountWF, 20, "El valor del campo no corresponde a un codigo de consutla especializado válido válido"]);
-              }
-              break;
-
-            default:
-              # code...
-              break;
-          }
-
+        array_push($detail_erros, [$lineCount, $lineCountWF, 19, "El campo debe tener un valor entre 1 y 5"]);
         }
+      
+        
     }else{
       $isValidRow = false;
       array_push($detail_erros, [$lineCount, $lineCountWF, 19, "El campo no debe ser nulo"]);
     }
 
-    
-
-    //validacion campo 21
-    if(isset($consultSection[20])) {
-      if($consultSection[19] != 99){
-        if(strlen($consultSection[20]) >50 && $consultSection[20] == ''){
-          $isValidRow = false;
-        array_push($detail_erros, [$lineCount, $lineCountWF, 21, "El campo no dede ser nulo y debe tener una longitud menor o igual a 50"]);
-        }
-      }
-        
-    }else{
-      $isValidRow = false;
-      array_push($detail_erros, [$lineCount, $lineCountWF, 21, "El campo no debe ser nulo"]);
-    }
-
-    //validacion campo 22
-    if(isset($consultSection[21])) {
-        if(strlen($consultSection[21]) != 4){
-          $isValidRow = false;
-          array_push($detail_erros, [$lineCount, $lineCountWF, 22, "El campo debe tener un longitud de 4 caracteres."]);
-        }else{
-          $exists = DiagnosticoCiex::where('cod_diagnostico',$consultSection[21])->first();
-          if(!$exists){
-            $isValidRow = false;
-            array_push($detail_erros, [$lineCount, $lineCountWF, 22, "El valor no corresponde a un valor código de diagnóstico valido"]);
-          }
-        }
-    }else{
-      $isValidRow = false;
-      array_push($detail_erros, [$lineCount, $lineCountWF, 22, "El campo no debe ser nulo"]);
-    }
-
-    //validacion campo 23
-    if(isset($consultSection[22])) {
-        if(strlen($consultSection[22]) > 50 ){
-          $isValidRow = false;
-        array_push($detail_erros, [$lineCount, $lineCountWF, 23, "El campo debe tener una longitud menor o igual a 50 caracteres."]);
-        }
-    }else{
-      $isValidRow = false;
-      array_push($detail_erros, [$lineCount, $lineCountWF, 23, "El campo no debe ser nulo"]);
-    }
-
-    //validacion campo 24
-    if(isset($consultSection[23])) {
-        if(strlen($consultSection[23]) != 4){
-          $isValidRow = false;
-          array_push($detail_erros, [$lineCount, $lineCountWF, 24, "El campo debe tener un longitud de 4 caracteres."]);
-        }else{
-          $exists = DiagnosticoCiex::where('cod_diagnostico',$consultSection[23])->first();
-          if(!$exists){
-            $isValidRow = false;
-            array_push($detail_erros, [$lineCount, $lineCountWF, 24, "El valor no corresponde a un valor código de diagnóstico valido"]);
-          }
-        }
-    }else{
-      $isValidRow = false;
-      array_push($detail_erros, [$lineCount, $lineCountWF, 24, "El campo no debe ser nulo"]);
-    }
-
-    //validacion campo 25
-    if(isset($consultSection[24])) {
-        if(strlen($consultSection[24]) > 50 ){
-          $isValidRow = false;
-        array_push($detail_erros, [$lineCount, $lineCountWF, 25, "El campo debe tener una longitud menor o igual a 50 caracteres."]);
-        }
-    }else{
-      $isValidRow = false;
-      array_push($detail_erros, [$lineCount, $lineCountWF, 25, "El campo no debe ser nulo"]);
-    }
-
-    //validacion campo 26
-    if(isset($consultSection[25])) {
-        if(strlen($consultSection[25]) != 4){
-          $isValidRow = false;
-          array_push($detail_erros, [$lineCount, $lineCountWF, 26, "El campo debe tener un longitud de 4 caracteres."]);
-        }else{
-          $exists = DiagnosticoCiex::where('cod_diagnostico',$consultSection[25])->first();
-          if(!$exists){
-            $isValidRow = false;
-            array_push($detail_erros, [$lineCount, $lineCountWF, 26, "El valor no corresponde a un valor código de diagnóstico valido"]);
-          }
-        }
-    }else{
-      $isValidRow = false;
-      array_push($detail_erros, [$lineCount, $lineCountWF, 26, "El campo no debe ser nulo"]);
-    }
-
-    //validacion campo 27
-    if(isset($consultSection[26])) {
-        if(strlen($consultSection[26]) > 50 ){
-          $isValidRow = false;
-        array_push($detail_erros, [$lineCount, $lineCountWF, 27, "El campo debe tener una longitud menor o igual a 50 caracteres."]);
-        }
-    }else{
-      $isValidRow = false;
-      array_push($detail_erros, [$lineCount, $lineCountWF, 27, "El campo no debe ser nulo"]);
-    }
-
-    //validacion campo 28
-    if(isset($consultSection[27])) {
-        if(strlen($consultSection[27]) != 1){
-          $isValidRow = false;
-          array_push($detail_erros, [$lineCount, $lineCountWF, 28, "El campo debe terner una longitud igual a 1 caracter."]);
-        }else{
-          $exists = TipoDiagnostico::where('cod_tipo',$consultSection[27])->first();
-          if (!$exists) {
-            $isValidRow = false;
-            array_push($detail_erros, [$lineCount, $lineCountWF, 28, "El campo no corresponde a la identificación tipo de diagnóstico válido."]);
-          }
-        }
-    }else{
-      $isValidRow = false;
-      array_push($detail_erros, [$lineCount, $lineCountWF, 28, "El campo no debe ser nulo"]);
-    }
-
-    //validacion campo 29
-    if(isset($consultSection[28])) {
-        if(!preg_match("/^\d{2}$/", $consultSection[28])){
-          $isValidRow = false;
-          array_push($detail_erros, [$lineCount, $lineCountWF, 29, "El campo debe ser un valor numérico de 2 dígitos"]);
-        }else{
-          $exists = FinalidadConsultum::where('cod_finalidad',$consultSection[28])->first();
-          if (!$exists) {
-            $isValidRow = false;
-            array_push($detail_erros, [$lineCount, $lineCountWF, 29, "El valor del campo no corresponde a un número de identificación de finalidad de consulta válido."]);
-          }
-        }
-    }else{
-      $isValidRow = false;
-      array_push($detail_erros, [$lineCount, $lineCountWF, 29, "El campo no debe ser nulo"]);
-    }
+   
   }
 
 }

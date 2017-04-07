@@ -2,11 +2,20 @@
 
 namespace App\Classes;
 
-
 use App\Traits\ToolsForFilesController;
+use App\Models\FileStatus;
+use App\Models\Archivo;
+use App\Models\UserIp;
+use App\Models\Registro;
+use App\Models\Eapb;
+use App\Models\EntidadesSectorSalud;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
 use App\Models\DiagnosticoCiex;
-use App\Models\TipoDiagnostico;
-use App\Models\FinalidadConsultum;
+use App\Models\IngresosEgresosHospitalario;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class AEH {
 
@@ -110,7 +119,7 @@ class AEH {
           $isValidRow = true;
           $this->validateEntitySection($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,0,6));
           $this->validateUserSection($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,6,9,true));
-          $this->validateAEH($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,15,14,true));
+          $this->validateAEH($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,15,13,true));
 
           if(!$isValidRow){
             
@@ -122,23 +131,21 @@ class AEH {
           }else{
               
             //se valida duplicidad en la informacion
-            $exists = DB::table('consulta')
-            ->join('registro', 'consulta.id_registro', '=', 'registro.id_registro_seq')
+            $exists = DB::table('ingresos_egresos_hospitalarios')
+            ->join('registro', 'ingresos_egresos_hospitalarios.id_registro', '=', 'registro.id_registro_seq')
             ->join('archivo', 'registro.id_registro_seq', '=', 'archivo.id_archivo_seq')
             ->join('eapbs', 'registro.id_registro_seq', '=', 'eapbs.id_entidad')
               ->where('archivo.fecha_ini_periodo', strtotime($firtsRow[2]))
               ->where('archivo.fecha_fin_periodo', strtotime($firtsRow[3]))
               ->where('eapbs.num_identificacion', $data[3])
-              ->where('consulta.fecha_consulta', $data[15])
-              ->where('consulta.ambito_consulta', $data[16])
-              ->where('consulta.tipo_codificacion', $data[18])
-              ->where('consulta.cod_consulta', $data[17])
-              ->where('consulta.cod_consulta_esp', $data[19])
-              ->where('consulta.cod_diagnostico_principal', $data[21])
-              ->where('consulta.cod_diagnostico_rel1', $data[23])
-              ->where('consulta.cod_diagnostico_rel2', $data[25])
-              ->where('consulta.tipo_diagnostico_principal', $data[27])
-              ->where('consulta.finalidad_consulta', $data[28])
+              ->where('ingresos_egresos_hospitalarios.fecha_hora_ingreso',strtotime($data[15].' '.$data[16]))
+              ->where('ingresos_egresos_hospitalarios.fecha_hora_egreso', strtotime($data[17].' '.$data[18]))
+              ->where('ingresos_egresos_hospitalarios.cod_diagnostico_ingreso', $data[19])
+              ->where('ingresos_egresos_hospitalarios.cod_diagnostico_egreso', $data[21])
+              ->where('ingresos_egresos_hospitalarios.cod_diagnostico_egreso_rel1', $data[23])
+              ->where('ingresos_egresos_hospitalarios.cod_diagnostico_egreso_rel2', $data[24])
+              ->where('ingresos_egresos_hospitalarios.estado_salida', $data[25])
+              ->where('ingresos_egresos_hospitalarios.codigo_diagnostico_muerte', $data[26])
             ->firts();
 
             if($exists){
@@ -152,20 +159,35 @@ class AEH {
             }else
             {
         
-              $useripsid = 0;
-              $ipsuser = new UserIp();
-              $ipsuser->num_historia_clinica = $data[6];
-              $ipsuser->tipo_identificacion = $data[7];
-              $ipsuser->num_identenficacion = $data[8];
-              $ipsuser->primer_apellido = $data[9];
-              $ipsuser->primer_nombre = $data[11];
-              $ipsuser->segundo_nombre = $data[12];
-              $ipsuser->segundo_apellido = $data[10];
-              $ipsuser->fecha_nacimiento = $data[13];
-              $ipsuser->sexo = $data[14];
+              $exists = UserIp::where('num_identenficacion', $data[8])->first();
 
-              $ipsuser->save();
-              $useripsid = $ipsuser->id_user;
+              $createNewUserIp = true;
+              $useripsid = 0;
+
+              if($exists){
+                if($exists->num_historia_clinica ==  $data[6] || $exists->tipo_identificacion ==  $data[7] || $exists->primer_apellido ==  $data[9] || $exists->segundo_apellido ==  $data[10] || $exists->primer_nombre ==  $data[11] || $exists->segundo_nombre ==  $data[12] || $exists->fecha_nacimiento ==  $data[13] || $exists->sexo ==  $data[14])
+                {
+                  $createNewUserIp = false;
+                  $useripsid = $exists->id_user;
+                }
+              }
+
+              if($createNewUserIp)
+              {
+                $ipsuser = new UserIp();
+                $ipsuser->num_historia_clinica = $data[6];
+                $ipsuser->tipo_identificacion = $data[7];
+                $ipsuser->num_identenficacion = $data[8];
+                $ipsuser->primer_apellido = $data[9];
+                $ipsuser->segundo_apellido = $data[10];
+                $ipsuser->primer_nombre = $data[11];
+                $ipsuser->segundo_nombre = $data[12];
+                $ipsuser->fecha_nacimiento = $data[13];
+                $ipsuser->sexo = $data[14];
+
+                $ipsuser->save();
+                $useripsid = $ipsuser->id_user;
+              }
               
 
               //se alamcena la informacion de la relacion registro
@@ -179,21 +201,19 @@ class AEH {
               $register->id_eapb = $eapb->id_entidad;
               $register->save();
 
-              //se almacena la información correpondiente a la consulta
-              $consult = new Consultum();
-              $consult->id_registro = $register->id_registro_seq;
-              $consult->fecha_consulta = $data[15];
-              $consult->ambito_consulta = $data[16];
-              $consult->tipo_codificacion = $data[18];
-              $consult->cod_consulta = $data[17];
-              $consult->cod_consulta_esp = $data[19];
-              $consult->cod_diagnostico_principal = $data[21];
-              $consult->cod_diagnostico_rel1 = $data[23];
-              $consult->cod_diagnostico_rel2 = $data[25];
-              $consult->tipo_diagnostico_principal = $data[27];
-              $consult->finalidad_consulta = $data[28];
+              //se almacena la información correpondiente a la ingreso egreso hopitalario
+              $iehobject = new IngresosEgresosHospitalario();
+              $iehobject->id_registro = $register->id_registro_seq;
+              $iehobject->fecha_hora_ingreso = strtotime($data[15].' '.$data[16])
+              $iehobject->fecha_hora_egreso = strtotime($data[17].' '.$data[18])
+              $iehobject->cod_diagnostico_ingreso = $data[19];
+              $iehobject->cod_diagnostico_egreso = $data[21];
+              $iehobject->cod_diagnostico_egreso_rel1 = $data[23];
+              $iehobject->cod_diagnostico_egreso_rel2 = $data[24];
+              $iehobject->estado_salida = $data[25];
+              $iehobject->codigo_diagnostico_muerte = $data[26];
 
-              $consult->save();
+              $iehobject->save();
 
             }  
           }

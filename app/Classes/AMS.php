@@ -4,10 +4,22 @@ namespace App\Classes;
 
 
 use App\Traits\ToolsForFilesController;
+use App\Models\FileStatus;
+use App\Models\Archivo;
+use App\Models\UserIp;
+use App\Models\Registro;
+use App\Models\Eapb;
+use App\Models\EntidadesSectorSalud;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
 use App\Models\MedicamentosAtc;
 use App\Models\MedicamentosCum;
 use App\Models\MedicamentosHomologo;
 use App\Models\MedicamentosR;
+use App\Models\Medicamento;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class AMS {
 
@@ -111,7 +123,7 @@ class AMS {
           $isValidRow = true;
           $this->validateEntitySection($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,0,6));
           $this->validateUserSection($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,6,9,true));
-          $this->validateAMS($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,15,14,true));
+          $this->validateAMS($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,15,5,true));
 
           if(!$isValidRow){
             
@@ -123,23 +135,18 @@ class AMS {
           }else{
               
             //se valida duplicidad en la informacion
-            $exists = DB::table('consulta')
-            ->join('registro', 'consulta.id_registro', '=', 'registro.id_registro_seq')
+            $exists = DB::table('medicamento')
+            ->join('registro', 'medicamento.id_registro', '=', 'registro.id_registro_seq')
             ->join('archivo', 'registro.id_registro_seq', '=', 'archivo.id_archivo_seq')
             ->join('eapbs', 'registro.id_registro_seq', '=', 'eapbs.id_entidad')
               ->where('archivo.fecha_ini_periodo', strtotime($firtsRow[2]))
               ->where('archivo.fecha_fin_periodo', strtotime($firtsRow[3]))
               ->where('eapbs.num_identificacion', $data[3])
-              ->where('consulta.fecha_consulta', $data[15])
-              ->where('consulta.ambito_consulta', $data[16])
-              ->where('consulta.tipo_codificacion', $data[18])
-              ->where('consulta.cod_consulta', $data[17])
-              ->where('consulta.cod_consulta_esp', $data[19])
-              ->where('consulta.cod_diagnostico_principal', $data[21])
-              ->where('consulta.cod_diagnostico_rel1', $data[23])
-              ->where('consulta.cod_diagnostico_rel2', $data[25])
-              ->where('consulta.tipo_diagnostico_principal', $data[27])
-              ->where('consulta.finalidad_consulta', $data[28])
+              ->where('medicamento.fecha_entrega', $data[15])
+              ->where('medicamento.tipo_codificacion', $data[17])
+              ->where('medicamento.codigo_medicamento', $data[16])
+              ->where('medicamento.catidad', $data[18])
+              ->where('medicamento.ambito_suministro', $data[19])
             ->firts();
 
             if($exists){
@@ -153,20 +160,35 @@ class AMS {
             }else
             {
         
-              $useripsid = 0;
-              $ipsuser = new UserIp();
-              $ipsuser->num_historia_clinica = $data[6];
-              $ipsuser->tipo_identificacion = $data[7];
-              $ipsuser->num_identenficacion = $data[8];
-              $ipsuser->primer_apellido = $data[9];
-              $ipsuser->primer_nombre = $data[11];
-              $ipsuser->segundo_nombre = $data[12];
-              $ipsuser->segundo_apellido = $data[10];
-              $ipsuser->fecha_nacimiento = $data[13];
-              $ipsuser->sexo = $data[14];
+              $exists = UserIp::where('num_identenficacion', $data[8])->first();
 
-              $ipsuser->save();
-              $useripsid = $ipsuser->id_user;
+              $createNewUserIp = true;
+              $useripsid = 0;
+
+              if($exists){
+                if($exists->num_historia_clinica ==  $data[6] || $exists->tipo_identificacion ==  $data[7] || $exists->primer_apellido ==  $data[9] || $exists->segundo_apellido ==  $data[10] || $exists->primer_nombre ==  $data[11] || $exists->segundo_nombre ==  $data[12] || $exists->fecha_nacimiento ==  $data[13] || $exists->sexo ==  $data[14])
+                {
+                  $createNewUserIp = false;
+                  $useripsid = $exists->id_user;
+                }
+              }
+
+              if($createNewUserIp)
+              {
+                $ipsuser = new UserIp();
+                $ipsuser->num_historia_clinica = $data[6];
+                $ipsuser->tipo_identificacion = $data[7];
+                $ipsuser->num_identenficacion = $data[8];
+                $ipsuser->primer_apellido = $data[9];
+                $ipsuser->segundo_apellido = $data[10];
+                $ipsuser->primer_nombre = $data[11];
+                $ipsuser->segundo_nombre = $data[12];
+                $ipsuser->fecha_nacimiento = $data[13];
+                $ipsuser->sexo = $data[14];
+
+                $ipsuser->save();
+                $useripsid = $ipsuser->id_user;
+              }
               
 
               //se alamcena la informacion de la relacion registro
@@ -180,21 +202,16 @@ class AMS {
               $register->id_eapb = $eapb->id_entidad;
               $register->save();
 
-              //se almacena la información correpondiente a la consulta
-              $consult = new Consultum();
-              $consult->id_registro = $register->id_registro_seq;
-              $consult->fecha_consulta = $data[15];
-              $consult->ambito_consulta = $data[16];
-              $consult->tipo_codificacion = $data[18];
-              $consult->cod_consulta = $data[17];
-              $consult->cod_consulta_esp = $data[19];
-              $consult->cod_diagnostico_principal = $data[21];
-              $consult->cod_diagnostico_rel1 = $data[23];
-              $consult->cod_diagnostico_rel2 = $data[25];
-              $consult->tipo_diagnostico_principal = $data[27];
-              $consult->finalidad_consulta = $data[28];
-
-              $consult->save();
+              //se almacena la información correpondiente al Medicamento suministrado
+              $medicamento = new Medicamento();
+              $medicamento->id_registro = $register->id_registro_seq;
+              $medicamento->fecha_entrega = $data[15];
+              $medicamento->tipo_codificacion = $data[17];
+              $medicamento->codigo_medicamento = $data[16];
+              $medicamento->catidad = $data[18];
+              $medicamento->ambito_suministro = $data[19];
+  
+              $medicamento->save();
 
             }  
           }
@@ -346,15 +363,15 @@ class AMS {
             $exists = MedicamentosCum::where('codigo_medicamento',$consultSection[16])->first();
             if(!$exists){
               $isValidRow = false;
-              array_push($detail_erros, [$lineCount, $lineCountWF, 17, "El valor del campo no correspondea un codigo de medicamentos CUM cups válido"]);
+              array_push($detail_erros, [$lineCount, $lineCountWF, 17, "El valor del campo no correspondea un codigo de medicamentos CUM válido"]);
             }
             break;
           
           case '2':
-            $exists = MedicamentosCum::where('codigo_medicamento',$consultSection[16])->first();
+            $exists = MedicamentosAtc::where('codigo_medicamento',$consultSection[16])->first();
             if(!$exists){
               $isValidRow = false;
-              array_push($detail_erros, [$lineCount, $lineCountWF, 17, "El valor del campo no correspondea un codigo de medicamentos CUM cups válido"]);
+              array_push($detail_erros, [$lineCount, $lineCountWF, 17, "El valor del campo no correspondea un codigo de medicamentos atc válido"]);
             }
             break;
 
@@ -362,15 +379,15 @@ class AMS {
             $exists = MedicamentosR::where('codigo_medicamento',$consultSection[16])->first();
             if(!$exists){
               $isValidRow = false;
-              array_push($detail_erros, [$lineCount, $lineCountWF, 17, "El valor del campo no correspondea un codigo de medicamentos CUM cups válido"]);
+              array_push($detail_erros, [$lineCount, $lineCountWF, 17, "El valor del campo no correspondea un codigo de medicamentos registro sanitario válido"]);
             }
             break;
 
           case '4':
-            $exists = MedicamentosCum::where('codigo_medicamento',$consultSection[16])->first();
+            $exists = MedicamentosHomologo::where('codigo_medicamento',$consultSection[16])->first();
             if(!$exists){
               $isValidRow = false;
-              array_push($detail_erros, [$lineCount, $lineCountWF, 17, "El valor del campo no correspondea un codigo de medicamentos CUM cups válido"]);
+              array_push($detail_erros, [$lineCount, $lineCountWF, 17, "El valor del campo no correspondea un codigo de medicamentos homologo válido"]);
             }
             break;
 

@@ -2,12 +2,22 @@
 
 namespace App\Classes;
 
-
 use App\Traits\ToolsForFilesController;
+use App\Models\FileStatus;
+use App\Models\Archivo;
+use App\Models\UserIp;
+use App\Models\Registro;
+use App\Models\Eapb;
+use App\Models\EntidadesSectorSalud;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
 use App\Models\DiagnosticoCiex;
 use App\Models\ProcedimientoCup;
 use App\Models\ProcedimientoHomologo;
 use App\Models\ProcedimientosQNq;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class APS {
 
@@ -111,7 +121,7 @@ class APS {
           $isValidRow = true;
           $this->validateEntitySection($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,0,6));
           $this->validateUserSection($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,6,9,true));
-          $this->validateAPS($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,15,14,true));
+          $this->validateAPS($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,15,7,true));
 
           if(!$isValidRow){
             
@@ -123,23 +133,19 @@ class APS {
           }else{
               
             //se valida duplicidad en la informacion
-            $exists = DB::table('consulta')
-            ->join('registro', 'consulta.id_registro', '=', 'registro.id_registro_seq')
+            $exists = DB::table('procedimientos_q_nq')
+            ->join('registro', 'procedimientos_q_nq.id_registro', '=', 'registro.id_registro_seq')
             ->join('archivo', 'registro.id_registro_seq', '=', 'archivo.id_archivo_seq')
             ->join('eapbs', 'registro.id_registro_seq', '=', 'eapbs.id_entidad')
               ->where('archivo.fecha_ini_periodo', strtotime($firtsRow[2]))
               ->where('archivo.fecha_fin_periodo', strtotime($firtsRow[3]))
               ->where('eapbs.num_identificacion', $data[3])
-              ->where('consulta.fecha_consulta', $data[15])
-              ->where('consulta.ambito_consulta', $data[16])
-              ->where('consulta.tipo_codificacion', $data[18])
-              ->where('consulta.cod_consulta', $data[17])
-              ->where('consulta.cod_consulta_esp', $data[19])
-              ->where('consulta.cod_diagnostico_principal', $data[21])
-              ->where('consulta.cod_diagnostico_rel1', $data[23])
-              ->where('consulta.cod_diagnostico_rel2', $data[25])
-              ->where('consulta.tipo_diagnostico_principal', $data[27])
-              ->where('consulta.finalidad_consulta', $data[28])
+              ->where('procedimientos_q_nq.fecha_procedimiento', $data[15])
+              ->where('procedimientos_q_nq.tipo_codificacion', $data[17])
+              ->where('procedimientos_q_nq.cod_procedimiento', $data[16])
+              ->where('procedimientos_q_nq.cod_diagnostico_principal', $data[18])
+              ->where('procedimientos_q_nq.cod_diagnostico_rel1', $data[20])
+              ->where('procedimientos_q_nq.cod_diagnostico_rel2', $data[21])
             ->firts();
 
             if($exists){
@@ -153,20 +159,35 @@ class APS {
             }else
             {
         
-              $useripsid = 0;
-              $ipsuser = new UserIp();
-              $ipsuser->num_historia_clinica = $data[6];
-              $ipsuser->tipo_identificacion = $data[7];
-              $ipsuser->num_identenficacion = $data[8];
-              $ipsuser->primer_apellido = $data[9];
-              $ipsuser->primer_nombre = $data[11];
-              $ipsuser->segundo_nombre = $data[12];
-              $ipsuser->segundo_apellido = $data[10];
-              $ipsuser->fecha_nacimiento = $data[13];
-              $ipsuser->sexo = $data[14];
+              $exists = UserIp::where('num_identenficacion', $data[8])->first();
 
-              $ipsuser->save();
-              $useripsid = $ipsuser->id_user;
+              $createNewUserIp = true;
+              $useripsid = 0;
+
+              if($exists){
+                if($exists->num_historia_clinica ==  $data[6] || $exists->tipo_identificacion ==  $data[7] || $exists->primer_apellido ==  $data[9] || $exists->segundo_apellido ==  $data[10] || $exists->primer_nombre ==  $data[11] || $exists->segundo_nombre ==  $data[12] || $exists->fecha_nacimiento ==  $data[13] || $exists->sexo ==  $data[14])
+                {
+                  $createNewUserIp = false;
+                  $useripsid = $exists->id_user;
+                }
+              }
+
+              if($createNewUserIp)
+              {
+                $ipsuser = new UserIp();
+                $ipsuser->num_historia_clinica = $data[6];
+                $ipsuser->tipo_identificacion = $data[7];
+                $ipsuser->num_identenficacion = $data[8];
+                $ipsuser->primer_apellido = $data[9];
+                $ipsuser->segundo_apellido = $data[10];
+                $ipsuser->primer_nombre = $data[11];
+                $ipsuser->segundo_nombre = $data[12];
+                $ipsuser->fecha_nacimiento = $data[13];
+                $ipsuser->sexo = $data[14];
+
+                $ipsuser->save();
+                $useripsid = $ipsuser->id_user;
+              }
               
 
               //se alamcena la informacion de la relacion registro
@@ -180,21 +201,17 @@ class APS {
               $register->id_eapb = $eapb->id_entidad;
               $register->save();
 
-              //se almacena la información correpondiente a la consulta
-              $consult = new Consultum();
-              $consult->id_registro = $register->id_registro_seq;
-              $consult->fecha_consulta = $data[15];
-              $consult->ambito_consulta = $data[16];
-              $consult->tipo_codificacion = $data[18];
-              $consult->cod_consulta = $data[17];
-              $consult->cod_consulta_esp = $data[19];
-              $consult->cod_diagnostico_principal = $data[21];
-              $consult->cod_diagnostico_rel1 = $data[23];
-              $consult->cod_diagnostico_rel2 = $data[25];
-              $consult->tipo_diagnostico_principal = $data[27];
-              $consult->finalidad_consulta = $data[28];
-
-              $consult->save();
+              //se almacena la información correpondiente al procedimiento
+              $procedimiento = new ProcedimientosQNq();
+              $procedimiento->id_registro = $register->id_registro_seq;
+              $procedimiento->fecha_procedimiento = $data[15];
+              $procedimiento->tipo_codificacion = $data[17];
+              $procedimiento->cod_procedimiento = $data[16];
+              $procedimiento->cod_diagnostico_principal = $data[18];
+              $procedimiento->cod_diagnostico_rel1 = $data[20];
+              $procedimiento->ambito_procedimiento = $data[21];
+            
+              $procedimiento->save();
 
             }  
           }

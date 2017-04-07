@@ -164,22 +164,36 @@ class AAC {
               continue;
             }else
             {
-        
-              $useripsid = 0;
-              $ipsuser = new UserIp();
-              $ipsuser->num_historia_clinica = $data[6];
-              $ipsuser->tipo_identificacion = $data[7];
-              $ipsuser->num_identenficacion = $data[8];
-              $ipsuser->primer_apellido = $data[9];
-              $ipsuser->primer_nombre = $data[11];
-              $ipsuser->segundo_nombre = $data[12];
-              $ipsuser->segundo_apellido = $data[10];
-              $ipsuser->fecha_nacimiento = $data[13];
-              $ipsuser->sexo = $data[14];
-
-              $ipsuser->save();
-              $useripsid = $ipsuser->id_user;
               
+              $exists = UserIp::where('num_identenficacion', $data[8])->first();
+
+              $createNewUserIp = true;
+              $useripsid = 0;
+
+              if($exists){
+                if($exists->num_historia_clinica ==  $data[6] || $exists->tipo_identificacion ==  $data[7] || $exists->primer_apellido ==  $data[9] || $exists->segundo_apellido ==  $data[10] || $exists->primer_nombre ==  $data[11] || $exists->segundo_nombre ==  $data[12] || $exists->fecha_nacimiento ==  $data[13] || $exists->sexo ==  $data[14])
+                {
+                  $createNewUserIp = false;
+                  $useripsid = $exists->id_user;
+                }
+              }
+
+              if($createNewUserIp)
+              {
+                $ipsuser = new UserIp();
+                $ipsuser->num_historia_clinica = $data[6];
+                $ipsuser->tipo_identificacion = $data[7];
+                $ipsuser->num_identenficacion = $data[8];
+                $ipsuser->primer_apellido = $data[9];
+                $ipsuser->segundo_apellido = $data[10];
+                $ipsuser->primer_nombre = $data[11];
+                $ipsuser->segundo_nombre = $data[12];
+                $ipsuser->fecha_nacimiento = $data[13];
+                $ipsuser->sexo = $data[14];
+
+                $ipsuser->save();
+                $useripsid = $ipsuser->id_user;
+              }
 
               //se alamcena la informacion de la relacion registro
               $register = new Registro();
