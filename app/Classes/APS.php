@@ -16,8 +16,7 @@ use App\Models\DiagnosticoCiex;
 use App\Models\ProcedimientoCup;
 use App\Models\ProcedimientoHomologo;
 use App\Models\ProcedimientosQNq;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use App\Models\GiossArchivoApsCfvl;
 
 class APS {
 
@@ -131,15 +130,28 @@ class APS {
             $lineCountWF++;
             continue;
           }else{
-              
+            //se guarda todo el registro en en la tabla soporte
+                $tabla = new GiossArchivoApsCfvl();
+                $tabla->fecha_periodo_inicio = $this->archivo->fecha_ini_periodo;
+                $tabla->fecha_periodo_fin = $this->archivo->fecha_fin_periodo;
+                $tabla->nombre_archivo = $this->fileName;;
+                $tabla->numero_registro = $lineCount;
+                $tabla->contenido_registro_validado = implode('|', $data);
+                $tabla->fecha_hora_validacion = tiem() ;
+                $tabla->save();
+
+              //
+              // alamacena en la dimension
             //se valida duplicidad en la informacion
             $exists = DB::table('procedimientos_q_nq')
             ->join('registro', 'procedimientos_q_nq.id_registro', '=', 'registro.id_registro_seq')
             ->join('archivo', 'registro.id_registro_seq', '=', 'archivo.id_archivo_seq')
             ->join('eapbs', 'registro.id_registro_seq', '=', 'eapbs.id_entidad')
+            ->join('user_ips', 'registro.id_user', '=', 'user_ips.id_user')
               ->where('archivo.fecha_ini_periodo', strtotime($firtsRow[2]))
               ->where('archivo.fecha_fin_periodo', strtotime($firtsRow[3]))
               ->where('eapbs.num_identificacion', $data[3])
+              ->where('user_ips.num_identificacion', $data[8])
               ->where('procedimientos_q_nq.fecha_procedimiento', $data[15])
               ->where('procedimientos_q_nq.tipo_codificacion', $data[17])
               ->where('procedimientos_q_nq.cod_procedimiento', $data[16])
@@ -158,8 +170,8 @@ class APS {
               continue;
             }else
             {
-        
-              $exists = UserIp::where('num_identenficacion', $data[8])->first();
+              
+              $exists = UserIp::where('num_identificacion', $data[8])->orderBy('created_at', 'desc')->first();
 
               $createNewUserIp = true;
               $useripsid = 0;
@@ -177,7 +189,7 @@ class APS {
                 $ipsuser = new UserIp();
                 $ipsuser->num_historia_clinica = $data[6];
                 $ipsuser->tipo_identificacion = $data[7];
-                $ipsuser->num_identenficacion = $data[8];
+                $ipsuser->num_identificacion = $data[8];
                 $ipsuser->primer_apellido = $data[9];
                 $ipsuser->segundo_apellido = $data[10];
                 $ipsuser->primer_nombre = $data[11];
@@ -436,7 +448,7 @@ class APS {
           $isValidRow = false;
         array_push($detail_erros, [$lineCount, $lineCountWF, 22, "El campo de tener una longitud igual a 1"]);
         }else{
-          $exists = Ambito::where('ambito',$consultSection[21])->first();
+          $exists = Ambito::where('cod_ambito',$consultSection[21])->first();
           if(!$exists){
             array_push($detail_erros, [$lineCount, $lineCountWF, 22, "El valor del campo no correponde a un Ambito valido"]);
           }

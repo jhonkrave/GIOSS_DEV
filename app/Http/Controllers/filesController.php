@@ -5,6 +5,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use App\Classes\AAC;
+use App\Classes\AEH;
+use App\Classes\AMS;
+use App\Classes\AVA;
+use App\Classes\APS;
 use App\Models\FileStatus;
 use Illuminate\Support\Facades\DB;
 
@@ -66,24 +70,26 @@ class filesController extends Controller
                 switch ($fileTypes[$count]) {
                     case 'AAC':
                         $aac = new AAC($routeFolder,$fileName, $consecutive);
-
                         $aac->manageContent();
                         break;
-                    
-                    default:
-                        $aac = new AAC($routeFolder,$routeFile);
-                        $aac->manageContent();
+                    case 'AEH':
+                        $AEH = new AEH($routeFolder,$fileName, $consecutive);
+                        $AEH->manageContent();
+                        break;
+                    case 'AMS':
+                        $AMS = new AMS($routeFolder,$fileName, $consecutive);
+                        $AMS->manageContent();
+                        break;
+                    case 'APS':
+                        $APS = new APS($routeFolder,$fileName, $consecutive);
+                        $APS->manageContent();
+                        break;
+                    case 'AVA':
+                        $AVA = new AVA($routeFolder,$fileName, $consecutive);
+                        $AVA->manageContent();
                         break;
                 }
-                $count++;
-
-            // } catch (\Exception $e) {
-            //     $response = new \stdClass();
-            //     $response->error = $e->getMessage().'r';
-            //     echo $e;
-            // }
-            
-          
+                $count++;     
           
         }
 

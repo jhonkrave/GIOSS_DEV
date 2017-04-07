@@ -14,7 +14,7 @@ class CreateGiossArchivoAacCfvlTable extends Migration {
 	{
 		Schema::create('gioss_archivo_aac_cfvl', function(Blueprint $table)
 		{
-			$table->bigInteger('id');
+			$table->bigInteger('id',true);
 			$table->bigInteger('fecha_periodo_inicio');
 			$table->bigInteger('fecha_periodo_fin');
 			$table->string('nombre_archivo', 320);

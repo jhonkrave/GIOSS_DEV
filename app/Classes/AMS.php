@@ -13,13 +13,13 @@ use App\Models\EntidadesSectorSalud;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
+use App\Models\Ambito;
 use App\Models\MedicamentosAtc;
 use App\Models\MedicamentosCum;
 use App\Models\MedicamentosHomologo;
 use App\Models\MedicamentosR;
 use App\Models\Medicamento;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use App\Models\GiossArchivoAmsCfvl;
 
 class AMS {
 
@@ -50,7 +50,7 @@ class AMS {
     $this->detail_erros = array(['No. línea archivo original', 'No. linea en archivo de errores','Campo', 'Detalle']);
     $this->wrong_rows =  array();
     $this->success_rows =  array();
-
+    
   }
 
 
@@ -58,7 +58,7 @@ class AMS {
   public function manageContent() {
 
     try {
-
+      Log::info("entro managecontent");
       // se validad la existencia del archivo
       $isValidFile = true;
       $fileid = 0;
@@ -92,7 +92,7 @@ class AMS {
       $this->file_status->current_status = 'WORKING';
 
       $this->file_status->save();  
-
+      Log::info("entro archivos creados");
 
       $isValidFirstRow = true ;
       
@@ -120,27 +120,32 @@ class AMS {
         //se valida cada línea
         while($data = fgetcsv($this->handle, 10000, "|"))
         {
+
           $isValidRow = true;
           $this->validateEntitySection($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,0,6));
+          Log::info("valido entidad: ".$lineCount);
           $this->validateUserSection($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,6,9,true));
+          Log::info("valido user: ".$lineCount);
           $this->validateAMS($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,15,5,true));
-
+          Log::info("valido ams: ".$lineCount);
           if(!$isValidRow){
-            
+            Log::info("linea invalida".$lineCount);
             array_push($this->wrong_rows, $data);
             $this->updateStatusFile($lineCount); //se acatualiza la lienea ya tratada
             $lineCount++;
             $lineCountWF++;
             continue;
           }else{
-              
+              Log::info("entro a guardar: ".$lineCount);
             //se valida duplicidad en la informacion
             $exists = DB::table('medicamento')
             ->join('registro', 'medicamento.id_registro', '=', 'registro.id_registro_seq')
             ->join('archivo', 'registro.id_registro_seq', '=', 'archivo.id_archivo_seq')
             ->join('eapbs', 'registro.id_registro_seq', '=', 'eapbs.id_entidad')
+            ->join('user_ips', 'registro.id_user', '=', 'user_ips.id_user')
               ->where('archivo.fecha_ini_periodo', strtotime($firtsRow[2]))
               ->where('archivo.fecha_fin_periodo', strtotime($firtsRow[3]))
+              ->where('user_ips.num_identificacion', $data[8])
               ->where('eapbs.num_identificacion', $data[3])
               ->where('medicamento.fecha_entrega', $data[15])
               ->where('medicamento.tipo_codificacion', $data[17])
@@ -159,8 +164,19 @@ class AMS {
               continue;
             }else
             {
-        
-              $exists = UserIp::where('num_identenficacion', $data[8])->first();
+              //se guarda todo el registro en en la tabla soporte
+                $tabla = new GiossArchivoAmsCfvl();
+                $tabla->fecha_periodo_inicio = $this->archivo->fecha_ini_periodo;
+                $tabla->fecha_periodo_fin = $this->archivo->fecha_fin_periodo;
+                $tabla->nombre_archivo = $this->fileName;;
+                $tabla->numero_registro = $lineCount;
+                $tabla->contenido_registro_validado = implode('|', $data);
+                $tabla->fecha_hora_validacion = tiem() ;
+                $tabla->save();
+
+              //
+              // alamacena en la dimension
+              $exists = UserIp::where('num_identificacion', $data[8])->orderBy('created_at', 'desc')->first();
 
               $createNewUserIp = true;
               $useripsid = 0;
@@ -178,7 +194,7 @@ class AMS {
                 $ipsuser = new UserIp();
                 $ipsuser->num_historia_clinica = $data[6];
                 $ipsuser->tipo_identificacion = $data[7];
-                $ipsuser->num_identenficacion = $data[8];
+                $ipsuser->num_identificacion = $data[8];
                 $ipsuser->primer_apellido = $data[9];
                 $ipsuser->segundo_apellido = $data[10];
                 $ipsuser->primer_nombre = $data[11];
@@ -239,9 +255,9 @@ class AMS {
     $Porcent =  $this->file_status->porcent;
     $currentPorcent = ( ($lineCount - 1)  / $register_num)*100;
 
-    Log::info("Número de registros " . $register_num);
-    Log::info("porcentaje almacenado " . $Porcent);
-    Log::info("porcentaje actual " . $currentPorcent);
+    // Log::info("Número de registros " . $register_num);
+    // Log::info("porcentaje almacenado " . $Porcent);
+    // Log::info("porcentaje actual " . $currentPorcent);
 
     $dif = $currentPorcent -  $Porcent;
     if ($dif >= 1){
@@ -341,11 +357,11 @@ class AMS {
       $isValidRow = false;
       array_push($detail_erros, [$lineCount, $lineCountWF, 16, "El campo no debe ser nulo"]);
     }
-
+    Log::info("termino validacion camp 16 ");
 
     //validacion campo 17
     if(isset($consultSection[16])) {
-        if(strlen($consultSection[16]) != 20){
+        if(strlen($consultSection[16]) > 20){
           $isValidRow = false;
           array_push($detail_erros, [$lineCount, $lineCountWF, 17, "El campo debe terner una longitud igual a 20 caracteres"]);
         }
@@ -354,6 +370,7 @@ class AMS {
       $isValidRow = false;
       array_push($detail_erros, [$lineCount, $lineCountWF, 17, "El campo no debe ser nulo"]);
     }
+    Log::info("termino validacion camp 17 ");
 
     //validacion campo 18
      if(isset($consultSection[17])) {
@@ -402,17 +419,20 @@ class AMS {
       $isValidRow = false;
       array_push($detail_erros, [$lineCount, $lineCountWF, 19, "El campo no debe ser nulo"]);
     }
+    Log::info("termino validacion camp 18 ");
 
     //validacion campo 19
     if(isset($consultSection[18])) {
         if(!is_int( $consultSection[18])){
           $isValidRow = false;
-          array_push($detail_erros, [$lineCount, $lineCountWF, 19, "El campo debe ser un valor entero"]);
+          array_push($detail_erros, [$lineCount, $lineCountWF, 19, "El campo debe ser un valor entero ".$consultSection[18]]);
         }
     }else{
       $isValidRow = false;
       array_push($detail_erros, [$lineCount, $lineCountWF, 19, "El campo no debe ser nulo"]);
     }
+
+    Log::info("termino validacion camp 19 ");
 
     //validacion campo 20
     if(isset($consultSection[19])) {
@@ -420,7 +440,7 @@ class AMS {
           $isValidRow = false;
         array_push($detail_erros, [$lineCount, $lineCountWF, 20, "El campo de tener una longitud igual a 1"]);
         }else{
-          $exists = Ambito::where('ambito',$consultSection[19])->first();
+          $exists = Ambito::where('cod_ambito',$consultSection[19])->first();
           if(!$exists){
             array_push($detail_erros, [$lineCount, $lineCountWF, 20, "El valor del campo no correponde a un Ambito valido"]);
           }
@@ -429,6 +449,7 @@ class AMS {
       $isValidRow = false;
       array_push($detail_erros, [$lineCount, $lineCountWF, 20, "El campo no debe ser nulo"]);
     }
+    Log::info("termino validacion camp 20 ");
 
 
   }

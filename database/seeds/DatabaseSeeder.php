@@ -30,9 +30,10 @@ class DatabaseSeeder extends Seeder
         $this->call(eapsSeeder::class);
         $this->call(entidadPrestadorSaludSeeder::class);
         $this->call(medicamentoscumSeeder::class);
-        
-        
-        //$this->call(DBtipoEntidadSeeder::class);medicamentoscumSeeder
+        $this->call(medicamentosAtcSeeder::class);        
+        $this->call(vacunasCupsSeeder::class);
+        $this->call(consultasCupsSeeder::class);
+        //$this->call(DBtipoEntidadSeeder::class);medicamentosAtcSeeder
 	    //$this->call(DBconsulta_homologoSeeder::class);
 
 	    Model::reguard();

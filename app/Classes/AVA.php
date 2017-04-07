@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Log;
 use App\Models\Vacunacion;
 use App\Models\VacunaCup;
 use App\Models\VacunaHomologo;
+use App\Models\GiossArchivoAvaCfvl;
 
 
 class AVA {
@@ -136,8 +137,10 @@ class AVA {
             ->join('registro', 'vacunacion.id_registro', '=', 'registro.id_registro_seq')
             ->join('archivo', 'registro.id_registro_seq', '=', 'archivo.id_archivo_seq')
             ->join('eapbs', 'registro.id_registro_seq', '=', 'eapbs.id_entidad')
+            ->join('user_ips', 'registro.id_user', '=', 'user_ips.id_user')
               ->where('archivo.fecha_ini_periodo', strtotime($firtsRow[2]))
               ->where('archivo.fecha_fin_periodo', strtotime($firtsRow[3]))
+               ->where('user_ips.num_identificacion', $data[8])
               ->where('eapbs.num_identificacion', $data[3])
               ->where('vacunacion.fecha_aplicacion', $data[15])
               ->where('vacunacion.tipo_codificacion', $data[17])
@@ -155,8 +158,19 @@ class AVA {
               continue;
             }else
             {
-        
-              $exists = UserIp::where('num_identenficacion', $data[8])->first();
+              //se guarda todo el registro en en la tabla soporte
+                $tabla = new GiossArchivoAvaCfvl();
+                $tabla->fecha_periodo_inicio = $this->archivo->fecha_ini_periodo;
+                $tabla->fecha_periodo_fin = $this->archivo->fecha_fin_periodo;
+                $tabla->nombre_archivo = $this->fileName;;
+                $tabla->numero_registro = $lineCount;
+                $tabla->contenido_registro_validado = implode('|', $data);
+                $tabla->fecha_hora_validacion = tiem() ;
+                $tabla->save();
+
+              //
+              // alamacena en la dimension
+              $exists = UserIp::where('num_identificacion', $data[8])->orderBy('created_at', 'desc')->first();
 
               $createNewUserIp = true;
               $useripsid = 0;
@@ -174,7 +188,7 @@ class AVA {
                 $ipsuser = new UserIp();
                 $ipsuser->num_historia_clinica = $data[6];
                 $ipsuser->tipo_identificacion = $data[7];
-                $ipsuser->num_identenficacion = $data[8];
+                $ipsuser->num_identificacion = $data[8];
                 $ipsuser->primer_apellido = $data[9];
                 $ipsuser->segundo_apellido = $data[10];
                 $ipsuser->primer_nombre = $data[11];

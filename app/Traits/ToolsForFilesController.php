@@ -11,6 +11,7 @@ use App\Models\Eapb;
 use App\Models\TipoEapb;
 use App\Models\TipoIdentEapb;
 use App\Models\FileStatus;
+use Illuminate\Support\Facades\Log;
 
 trait ToolsForFilesController {
 
@@ -20,13 +21,16 @@ trait ToolsForFilesController {
 			$exists = EntidadesSectorSalud::where('cod_habilitacion', $firstRow[0])->first();
 			if(!$exists){
 				$isValidRow = false;
-				array_push($detail_erros, [1, 0, 1, "NO existe u  código de habilitación para la entidad"]);
+				array_push($detail_erros, [1, 0, 1, "NO existe un  código de habilitación para la entidad"]);
+				//$detail_erros[]=[1, 0, 1, "NO existe un  código de habilitación para la entidad"];
 			}
 			
 		}else{
 			$isValidRow = false;
 			array_push($detail_erros, [1, 0, 1, "Debe ser un valor numérico no nulo"]);
 		}
+
+		Log::info("termino validacion 1");
 
 		if(isset($firstRow[1])){
 			if(!preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])$/", $firstRow[1])){
@@ -72,6 +76,9 @@ trait ToolsForFilesController {
 			$isValidRow = false;
 			array_push($detail_erros, [1, 0, 5, "Debe ser un valor numérico no nulo"]);
 		}
+
+		//Log::info('arra datils errors': print_r($detail_erros,true));
+
 
 	}
 

@@ -12,7 +12,7 @@ class medicamentoscumSeeder extends Seeder
      */
     public function run()
     {
-        DB::table('entidades_sector_salud')->delete();
+        DB::table('medicamentos_cum')->delete();
 
     	$header = null;
        	$data = array();
@@ -32,7 +32,7 @@ class medicamentoscumSeeder extends Seeder
                         DB::unprepared('INSERT INTO medicamentos_cum(codigo_medicamento,registro,producto,desrip_comercial_cum,descrip_atc,principio_activo) VALUES(\''.$row[0].'\',\''.$row[1].'\',\''.$row[2].'\',\''.$row[3].'\',\''.$row[4].'\',\''.$row[5].'\')');
                         $count++;
                     } catch (Exception $e) {
-                        Log::info("medicamentos seeder error linea  " .$count.'. '.$e->getMessage());
+                        Log::info("medicamentos seeder error linea  " .$count.'. '.$e->getMessage()." arreglo: ".print_r($row,true));
                         $count++;
                         continue;
                     }

@@ -15,7 +15,15 @@ class CreateVacunaCupsTable extends Migration {
 		Schema::create('vacuna_cups', function(Blueprint $table)
 		{
 			$table->string('codigo_tipo_vacuna', 40)->primary('vacuna_cups_pkey');
-			$table->string('descripcion', 100)->nullable();
+			$table->string('descripcion', 200)->nullable();
+			$table->string('cod_sis_cups', 4)->nullable();
+			$table->string('descrip_sis_cups', 200)->nullable();
+			$table->string('cod_grup_cups', 2)->nullable();
+			$table->string('desc_grup_cups', 200)->nullable();
+			$table->string('ambito_cups', 4)->nullable();
+			$table->string('sexo_cups', 4)->nullable();
+			$table->string('nivel_atencion', 4)->nullable();
+
 		});
 	}
 

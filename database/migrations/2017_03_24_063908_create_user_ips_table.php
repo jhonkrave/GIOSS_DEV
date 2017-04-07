@@ -17,7 +17,7 @@ class CreateUserIpsTable extends Migration {
 			$table->bigInteger('id_user', true);
 			$table->dateTime('fecha_ingreso')->nullable()->default('now()');
 			$table->string('tipo_identificacion', 2)->nullable();
-			$table->string('num_identenficacion', 20);
+			$table->string('num_identificacion', 20);
 			$table->date('fecha_nacimiento')->nullable();
 			$table->string('sexo', 2)->nullable();
 			$table->string('primer_nombre', 50)->nullable();
@@ -26,6 +26,7 @@ class CreateUserIpsTable extends Migration {
 			$table->string('segundo_apellido', 50)->nullable();
 			$table->string('num_historia_clinica', 12)->nullable();
 			$table->bigInteger('cod_prestador_servicios_salud')->nullable();
+			$table->timestamps();
 		});
 	}
 

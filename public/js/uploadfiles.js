@@ -6,7 +6,7 @@ $(document).ready(function(){
 		$('#alert').fadeOut();
 		count_files+=1;
 
-		var html = '<div class="form-group well " id="particular_file_div"> <button type="button" id="close_div_file" class="close" aria-hidden="true">&times;</button> <label for="tipo_file" class="form-control-label">Tipo de archivo No.'+count_files+'</label><select id="tipo_file" name="tipo_file[]"><option value="AAC">Archivo Atencion en Consulta AAC</option> <option value="AEH" >Archivo Egresos Hospitalarios AEH</option value="AMS"><option>Archivo Medicamentos Suministrados AMS</option><option value="AVA">Archivo Vacunas Aplicadas AVA</option><option value="APS">Archivo Procedimientos APS</option></select><div><input type="file" name="archivo[]" id="archivo"  accept=".txt"></div></div>';
+		var html = '<div class="form-group well " id="particular_file_div"> <button type="button" id="close_div_file" class="close" aria-hidden="true">&times;</button> <label for="tipo_file" class="form-control-label">Tipo de archivo No.'+count_files+'</label><select id="tipo_file" name="tipo_file[]"><option value="AAC">Archivo Atencion en Consulta AAC</option> <option value="AEH" >Archivo Egresos Hospitalarios AEH</option><option value="AMS">Archivo Medicamentos Suministrados AMS</option><option value="AVA">Archivo Vacunas Aplicadas AVA</option><option value="APS">Archivo Procedimientos APS</option></select><div><input type="file" name="archivo[]" id="archivo"  accept=".txt"></div></div>';
 		$('#files_div').append(html);
 	});
 

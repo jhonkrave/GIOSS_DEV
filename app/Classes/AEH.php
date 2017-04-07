@@ -14,8 +14,7 @@ use Illuminate\Support\Facades\Log;
 
 use App\Models\DiagnosticoCiex;
 use App\Models\IngresosEgresosHospitalario;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use App\Models\GiossArchivoAehCfvl;
 
 class AEH {
 
@@ -130,14 +129,15 @@ class AEH {
             continue;
           }else{
               
-            //se valida duplicidad en la informacion
             $exists = DB::table('ingresos_egresos_hospitalarios')
             ->join('registro', 'ingresos_egresos_hospitalarios.id_registro', '=', 'registro.id_registro_seq')
             ->join('archivo', 'registro.id_registro_seq', '=', 'archivo.id_archivo_seq')
             ->join('eapbs', 'registro.id_registro_seq', '=', 'eapbs.id_entidad')
+            ->join('user_ips', 'registro.id_user', '=', 'user_ips.id_user')
               ->where('archivo.fecha_ini_periodo', strtotime($firtsRow[2]))
               ->where('archivo.fecha_fin_periodo', strtotime($firtsRow[3]))
               ->where('eapbs.num_identificacion', $data[3])
+              ->where('user_ips.num_identificacion', $data[8])
               ->where('ingresos_egresos_hospitalarios.fecha_hora_ingreso',strtotime($data[15].' '.$data[16]))
               ->where('ingresos_egresos_hospitalarios.fecha_hora_egreso', strtotime($data[17].' '.$data[18]))
               ->where('ingresos_egresos_hospitalarios.cod_diagnostico_ingreso', $data[19])
@@ -158,8 +158,19 @@ class AEH {
               continue;
             }else
             {
-        
-              $exists = UserIp::where('num_identenficacion', $data[8])->first();
+              //se guarda todo el registro en en la tabla soporte
+                $tabla = new GiossArchivoAehCfvl();
+                $tabla->fecha_periodo_inicio = $this->archivo->fecha_ini_periodo;
+                $tabla->fecha_periodo_fin = $this->archivo->fecha_fin_periodo;
+                $tabla->nombre_archivo = $this->fileName;;
+                $tabla->numero_registro = $lineCount;
+                $tabla->contenido_registro_validado = implode('|', $data);
+                $tabla->fecha_hora_validacion = tiem() ;
+                $tabla->save();
+
+              //
+              // alamacena en la dimension
+              $exists = UserIp::where('num_identificacion', $data[8])->orderBy('created_at', 'desc')->first();
 
               $createNewUserIp = true;
               $useripsid = 0;
@@ -177,7 +188,7 @@ class AEH {
                 $ipsuser = new UserIp();
                 $ipsuser->num_historia_clinica = $data[6];
                 $ipsuser->tipo_identificacion = $data[7];
-                $ipsuser->num_identenficacion = $data[8];
+                $ipsuser->num_identificacion = $data[8];
                 $ipsuser->primer_apellido = $data[9];
                 $ipsuser->segundo_apellido = $data[10];
                 $ipsuser->primer_nombre = $data[11];
@@ -204,8 +215,8 @@ class AEH {
               //se almacena la información correpondiente a la ingreso egreso hopitalario
               $iehobject = new IngresosEgresosHospitalario();
               $iehobject->id_registro = $register->id_registro_seq;
-              $iehobject->fecha_hora_ingreso = strtotime($data[15].' '.$data[16])
-              $iehobject->fecha_hora_egreso = strtotime($data[17].' '.$data[18])
+              $iehobject->fecha_hora_ingreso = strtotime($data[15].' '.$data[16]);
+              $iehobject->fecha_hora_egreso = strtotime($data[17].' '.$data[18]);
               $iehobject->cod_diagnostico_ingreso = $data[19];
               $iehobject->cod_diagnostico_egreso = $data[21];
               $iehobject->cod_diagnostico_egreso_rel1 = $data[23];
