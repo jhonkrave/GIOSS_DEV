@@ -96,21 +96,21 @@ class AVA {
       
       
       
-      $firtsRow = fgetcsv($this->handle, 0, "|");
+      $firstRow = fgetcsv($this->handle, 0, "|");
       
-      $this->validateFirstRow($isValidFirstRow, $this->detail_erros, $firtsRow);
+      $this->validateFirstRow($isValidFirstRow, $this->detail_erros, $firstRow);
 
       if ($isValidFirstRow && $isValidFile) {
 
         //se adicionan terminan de definir los prametros el archivo
-        $this->archivo->fecha_ini_periodo = strtotime($firtsRow[2]);
-        $this->archivo->fecha_fin_periodo = strtotime($firtsRow[3]);
-        $entidad = EntidadesSectorSalud::where('cod_habilitacion', $firtsRow[0])->first();
+        $this->archivo->fecha_ini_periodo = strtotime($firstRow[2]);
+        $this->archivo->fecha_fin_periodo = strtotime($firstRow[3]);
+        $entidad = EntidadesSectorSalud::where('cod_habilitacion', $firstRow[0])->first();
         $this->archivo->id_entidad = $entidad->id_entidad;
-        $this->archivo->numero_registros = $firtsRow[4];
+        $this->archivo->numero_registros = $firstRow[4];
         $this->archivo->save();
 
-        $this->file_status->total_registers =  $firtsRow[4];
+        $this->file_status->total_registers =  $firstRow[4];
         $this->file_status->save();
 
         $lineCount = 2;
@@ -118,7 +118,9 @@ class AVA {
         //se valida cada línea
         while($data = fgetcsv($this->handle, 10000, "|"))
         {
+          $this->dropWhiteSpace($data); // se borran los espcaios en de cada campo
           $isValidRow = true;
+
           $this->validateEntitySection($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,0,6));
           $this->validateUserSection($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,6,9,true));
           $this->validateAEH($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,15,14,true));
@@ -138,15 +140,15 @@ class AVA {
             ->join('archivo', 'registro.id_registro_seq', '=', 'archivo.id_archivo_seq')
             ->join('eapbs', 'registro.id_registro_seq', '=', 'eapbs.id_entidad')
             ->join('user_ips', 'registro.id_user', '=', 'user_ips.id_user')
-              ->where('archivo.fecha_ini_periodo', strtotime($firtsRow[2]))
-              ->where('archivo.fecha_fin_periodo', strtotime($firtsRow[3]))
-               ->where('user_ips.num_identificacion', $data[8])
-              ->where('eapbs.num_identificacion', $data[3])
+              ->where('archivo.fecha_ini_periodo', strtotime($firstRow[2]))
+              ->where('archivo.fecha_fin_periodo', strtotime($firstRow[3]))
+              ->where('user_ips.num_identificacion', $data[8])
+              ->where('eapbs.num_identificacion', ltrim($data[3],'0'))
               ->where('vacunacion.fecha_aplicacion', $data[15])
               ->where('vacunacion.tipo_codificacion', $data[17])
               ->where('vacunacion.codigo_tipo_vacuna', $data[16])
               ->where('vacunacion.numero_dosis', $data[18])
-            ->firts();
+            ->first();
 
             if($exists){
               
@@ -165,7 +167,7 @@ class AVA {
                 $tabla->nombre_archivo = $this->fileName;;
                 $tabla->numero_registro = $lineCount;
                 $tabla->contenido_registro_validado = implode('|', $data);
-                $tabla->fecha_hora_validacion = tiem() ;
+                $tabla->fecha_hora_validacion = time() ;
                 $tabla->save();
 
               //
@@ -206,7 +208,7 @@ class AVA {
               $register->id_archivo = $this->archivo->id_archivo_seq;
               $register->id_user = $useripsid;
 
-              $eapb  = Eapb::where('num_identificacion', $data[3])
+              $eapb  = Eapb::where('num_identificacion',  ltrim($data[3],'0'))
                               ->where('cod_eapb', $data[4])->first();
 
               $register->id_eapb = $eapb->id_entidad;
@@ -222,10 +224,12 @@ class AVA {
 
               $vacunacion->save();
 
+              array_push($this->success_rows, $data);
+              $this->updateStatusFile($lineCount);
+              $lineCount++;
+
             }  
           }
-          $this->updateStatusFile($lineCount);
-          $lineCount++;
         }
 
         fclose($this->handle);
@@ -243,6 +247,7 @@ class AVA {
 
   private function updateStatusFile($lineCount)
   {
+    $line = $lineCount;
     //se actualiza el porcentaje
     $register_num = $this->archivo->numero_registros;
     $Porcent =  $this->file_status->porcent;
@@ -254,7 +259,7 @@ class AVA {
 
     $dif = $currentPorcent -  $Porcent;
     if ($dif >= 1){
-      $this->file_status->current_line = $lineCount - 1;
+      $this->file_status->current_line = $line;
       $this->file_status->porcent = intval($currentPorcent);
       $this->file_status->save();
     }
@@ -310,7 +315,7 @@ class AVA {
         
         $zipname = 'detalles'.time().'.zip';
         $zipsavePath = storage_path('archivos').'/../../public/zips/'.$zipname;
-        $this->createZip($this->folder, $zipname);
+        $this->createZip($this->folder, $zipsavePath);
         
         $this->file_status->zipath = asset('zips/'.$zipname);
         $this->file_status->current_status = 'COMPLETED';

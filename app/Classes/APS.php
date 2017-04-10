@@ -95,21 +95,21 @@ class APS {
       
       
       
-      $firtsRow = fgetcsv($this->handle, 0, "|");
+      $firstRow = fgetcsv($this->handle, 0, "|");
       
-      $this->validateFirstRow($isValidFirstRow, $this->detail_erros, $firtsRow);
+      $this->validateFirstRow($isValidFirstRow, $this->detail_erros, $firstRow);
 
       if ($isValidFirstRow && $isValidFile) {
 
         //se adicionan terminan de definir los prametros el archivo
-        $this->archivo->fecha_ini_periodo = strtotime($firtsRow[2]);
-        $this->archivo->fecha_fin_periodo = strtotime($firtsRow[3]);
-        $entidad = EntidadesSectorSalud::where('cod_habilitacion', $firtsRow[0])->first();
+        $this->archivo->fecha_ini_periodo = strtotime($firstRow[2]);
+        $this->archivo->fecha_fin_periodo = strtotime($firstRow[3]);
+        $entidad = EntidadesSectorSalud::where('cod_habilitacion', $firstRow[0])->first();
         $this->archivo->id_entidad = $entidad->id_entidad;
-        $this->archivo->numero_registros = $firtsRow[4];
+        $this->archivo->numero_registros = $firstRow[4];
         $this->archivo->save();
 
-        $this->file_status->total_registers =  $firtsRow[4];
+        $this->file_status->total_registers =  $firstRow[4];
         $this->file_status->save();
 
         $lineCount = 2;
@@ -117,7 +117,9 @@ class APS {
         //se valida cada línea
         while($data = fgetcsv($this->handle, 10000, "|"))
         {
+          $this->dropWhiteSpace($data); // se borran los espcaios en de cada campo
           $isValidRow = true;
+
           $this->validateEntitySection($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,0,6));
           $this->validateUserSection($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,6,9,true));
           $this->validateAPS($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,15,7,true));
@@ -148,9 +150,9 @@ class APS {
             ->join('archivo', 'registro.id_registro_seq', '=', 'archivo.id_archivo_seq')
             ->join('eapbs', 'registro.id_registro_seq', '=', 'eapbs.id_entidad')
             ->join('user_ips', 'registro.id_user', '=', 'user_ips.id_user')
-              ->where('archivo.fecha_ini_periodo', strtotime($firtsRow[2]))
-              ->where('archivo.fecha_fin_periodo', strtotime($firtsRow[3]))
-              ->where('eapbs.num_identificacion', $data[3])
+              ->where('archivo.fecha_ini_periodo', strtotime($firstRow[2]))
+              ->where('archivo.fecha_fin_periodo', strtotime($firstRow[3]))
+              ->where('eapbs.num_identificacion', ltrim($data[3],'0'))
               ->where('user_ips.num_identificacion', $data[8])
               ->where('procedimientos_q_nq.fecha_procedimiento', $data[15])
               ->where('procedimientos_q_nq.tipo_codificacion', $data[17])
@@ -158,7 +160,7 @@ class APS {
               ->where('procedimientos_q_nq.cod_diagnostico_principal', $data[18])
               ->where('procedimientos_q_nq.cod_diagnostico_rel1', $data[20])
               ->where('procedimientos_q_nq.cod_diagnostico_rel2', $data[21])
-            ->firts();
+            ->first();
 
             if($exists){
               
@@ -170,7 +172,18 @@ class APS {
               continue;
             }else
             {
+
+              //se guarda todo el registro en en la tabla soporte
+              $tabla = new GiossArchivoApsCfvl();
+              $tabla->fecha_periodo_inicio = $this->archivo->fecha_ini_periodo;
+              $tabla->fecha_periodo_fin = $this->archivo->fecha_fin_periodo;
+              $tabla->nombre_archivo = $this->fileName;;
+              $tabla->numero_registro = $lineCount;
+              $tabla->contenido_registro_validado = implode('|', $data);
+              $tabla->fecha_hora_validacion = time() ;
+              $tabla->save();
               
+              // alamacena en la dimension
               $exists = UserIp::where('num_identificacion', $data[8])->orderBy('created_at', 'desc')->first();
 
               $createNewUserIp = true;
@@ -207,7 +220,7 @@ class APS {
               $register->id_archivo = $this->archivo->id_archivo_seq;
               $register->id_user = $useripsid;
 
-              $eapb  = Eapb::where('num_identificacion', $data[3])
+              $eapb  = Eapb::where('num_identificacion', ltrim($data[3],'0'))
                               ->where('cod_eapb', $data[4])->first();
 
               $register->id_eapb = $eapb->id_entidad;
@@ -225,10 +238,12 @@ class APS {
             
               $procedimiento->save();
 
+              array_push($this->success_rows, $data);
+              $this->updateStatusFile($lineCount);
+              $lineCount++;
+
             }  
           }
-          $this->updateStatusFile($lineCount);
-          $lineCount++;
         }
 
         fclose($this->handle);
@@ -246,6 +261,7 @@ class APS {
 
   private function updateStatusFile($lineCount)
   {
+    $line = $lineCount;
     //se actualiza el porcentaje
     $register_num = $this->archivo->numero_registros;
     $Porcent =  $this->file_status->porcent;
@@ -257,7 +273,7 @@ class APS {
 
     $dif = $currentPorcent -  $Porcent;
     if ($dif >= 1){
-      $this->file_status->current_line = $lineCount - 1;
+      $this->file_status->current_line = $line;
       $this->file_status->porcent = intval($currentPorcent);
       $this->file_status->save();
     }
@@ -313,7 +329,7 @@ class APS {
         
         $zipname = 'detalles'.time().'.zip';
         $zipsavePath = storage_path('archivos').'/../../public/zips/'.$zipname;
-        $this->createZip($this->folder, $zipname);
+        $this->createZip($this->folder, $zipsavePath);
         
         $this->file_status->zipath = asset('zips/'.$zipname);
         $this->file_status->current_status = 'COMPLETED';

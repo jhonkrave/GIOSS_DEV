@@ -13,8 +13,6 @@ class UserIp extends Model
 
     protected $primaryKey = 'id_user';
 
-	public $timestamps = false;
-
     protected $fillable = [
         'fecha_ingreso',
         'tipo_identificacion',

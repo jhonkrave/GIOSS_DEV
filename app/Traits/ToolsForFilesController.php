@@ -136,7 +136,7 @@ trait ToolsForFilesController {
 		//validacion campo 4
     	if(isset($entitySection[3])){
     		if(preg_match('/^\d{12}$/', $entitySection[3])){
-    			$tipo = Eapb::where('num_identificacion',intval($entitySection[3]))->first();
+    			$tipo = Eapb::where('num_identificacion', ltrim($entitySection[3],'0'))->first();
     			if(!$tipo){
     				$isValidRow = false;
 					array_push($detail_erros, [$lineCount, $lineCountWF, 4, "El  valor del campo no corresponde a un número de identificación de entidad registrado"]);
@@ -331,8 +331,11 @@ trait ToolsForFilesController {
 	    $zip->close();
 	}
 
-	
-
-
+	public function dropWhiteSpace($array)
+	{
+		foreach ($array as $field) {
+			$field = trim($field);
+		}
+	}
 
 }

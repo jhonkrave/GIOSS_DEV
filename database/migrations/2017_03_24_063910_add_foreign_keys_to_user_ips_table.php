@@ -14,7 +14,6 @@ class AddForeignKeysToUserIpsTable extends Migration {
 	{
 		Schema::table('user_ips', function(Blueprint $table)
 		{
-			$table->foreign('cod_prestador_servicios_salud', 'user_ips_fkey1')->references('id_entidad')->on('entidades_sector_salud')->onUpdate('RESTRICT')->onDelete('RESTRICT');
 			$table->foreign('tipo_identificacion', 'user_ips_fkey2')->references('id_tipo_ident')->on('tipo_identificacion_user')->onUpdate('RESTRICT')->onDelete('RESTRICT');
 			$table->foreign('sexo', 'user_ips_fkey3')->references('id_genero')->on('generos_user')->onUpdate('RESTRICT')->onDelete('RESTRICT');
 		});
@@ -30,7 +29,6 @@ class AddForeignKeysToUserIpsTable extends Migration {
 	{
 		Schema::table('user_ips', function(Blueprint $table)
 		{
-			$table->dropForeign('user_ips_fkey1');
 			$table->dropForeign('user_ips_fkey2');
 			$table->dropForeign('user_ips_fkey3');
 		});

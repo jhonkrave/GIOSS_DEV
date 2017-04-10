@@ -25,7 +25,6 @@ class CreateUserIpsTable extends Migration {
 			$table->string('primer_apellido', 50)->nullable();
 			$table->string('segundo_apellido', 50)->nullable();
 			$table->string('num_historia_clinica', 12)->nullable();
-			$table->bigInteger('cod_prestador_servicios_salud')->nullable();
 			$table->timestamps();
 		});
 	}

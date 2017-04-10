@@ -98,21 +98,21 @@ class AMS {
       
       
       
-      $firtsRow = fgetcsv($this->handle, 0, "|");
+      $firstRow = fgetcsv($this->handle, 0, "|");
       
-      $this->validateFirstRow($isValidFirstRow, $this->detail_erros, $firtsRow);
+      $this->validateFirstRow($isValidFirstRow, $this->detail_erros, $firstRow);
 
       if ($isValidFirstRow && $isValidFile) {
 
         //se adicionan terminan de definir los prametros el archivo
-        $this->archivo->fecha_ini_periodo = strtotime($firtsRow[2]);
-        $this->archivo->fecha_fin_periodo = strtotime($firtsRow[3]);
-        $entidad = EntidadesSectorSalud::where('cod_habilitacion', $firtsRow[0])->first();
+        $this->archivo->fecha_ini_periodo = strtotime($firstRow[2]);
+        $this->archivo->fecha_fin_periodo = strtotime($firstRow[3]);
+        $entidad = EntidadesSectorSalud::where('cod_habilitacion', $firstRow[0])->first();
         $this->archivo->id_entidad = $entidad->id_entidad;
-        $this->archivo->numero_registros = $firtsRow[4];
+        $this->archivo->numero_registros = $firstRow[4];
         $this->archivo->save();
 
-        $this->file_status->total_registers =  $firtsRow[4];
+        $this->file_status->total_registers =  $firstRow[4];
         $this->file_status->save();
 
         $lineCount = 2;
@@ -120,8 +120,10 @@ class AMS {
         //se valida cada línea
         while($data = fgetcsv($this->handle, 10000, "|"))
         {
-
+          $this->dropWhiteSpace($data); // se borran los espcaios en de cada campo
           $isValidRow = true;
+
+
           $this->validateEntitySection($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,0,6));
           Log::info("valido entidad: ".$lineCount);
           $this->validateUserSection($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,6,9,true));
@@ -143,16 +145,16 @@ class AMS {
             ->join('archivo', 'registro.id_registro_seq', '=', 'archivo.id_archivo_seq')
             ->join('eapbs', 'registro.id_registro_seq', '=', 'eapbs.id_entidad')
             ->join('user_ips', 'registro.id_user', '=', 'user_ips.id_user')
-              ->where('archivo.fecha_ini_periodo', strtotime($firtsRow[2]))
-              ->where('archivo.fecha_fin_periodo', strtotime($firtsRow[3]))
+              ->where('archivo.fecha_ini_periodo', strtotime($firstRow[2]))
+              ->where('archivo.fecha_fin_periodo', strtotime($firstRow[3]))
               ->where('user_ips.num_identificacion', $data[8])
-              ->where('eapbs.num_identificacion', $data[3])
-              ->where('medicamento.fecha_entrega', $data[15])
+              ->where('eapbs.num_identificacion', ltrim($data[3],'0'))
+              ->where('medicamento.fecha_entrega', strtotime($data[15]))
               ->where('medicamento.tipo_codificacion', $data[17])
               ->where('medicamento.codigo_medicamento', $data[16])
               ->where('medicamento.catidad', $data[18])
               ->where('medicamento.ambito_suministro', $data[19])
-            ->firts();
+            ->first();
 
             if($exists){
               
@@ -162,16 +164,17 @@ class AMS {
               $lineCountWF++;
               $lineCount++;
               continue;
-            }else
+            }
+            else
             {
               //se guarda todo el registro en en la tabla soporte
                 $tabla = new GiossArchivoAmsCfvl();
                 $tabla->fecha_periodo_inicio = $this->archivo->fecha_ini_periodo;
                 $tabla->fecha_periodo_fin = $this->archivo->fecha_fin_periodo;
-                $tabla->nombre_archivo = $this->fileName;;
+                $tabla->nombre_archivo = $this->fileName;
                 $tabla->numero_registro = $lineCount;
                 $tabla->contenido_registro_validado = implode('|', $data);
-                $tabla->fecha_hora_validacion = tiem() ;
+                $tabla->fecha_hora_validacion = time() ;
                 $tabla->save();
 
               //
@@ -182,6 +185,7 @@ class AMS {
               $useripsid = 0;
 
               if($exists){
+                
                 if($exists->num_historia_clinica ==  $data[6] || $exists->tipo_identificacion ==  $data[7] || $exists->primer_apellido ==  $data[9] || $exists->segundo_apellido ==  $data[10] || $exists->primer_nombre ==  $data[11] || $exists->segundo_nombre ==  $data[12] || $exists->fecha_nacimiento ==  $data[13] || $exists->sexo ==  $data[14])
                 {
                   $createNewUserIp = false;
@@ -191,6 +195,7 @@ class AMS {
 
               if($createNewUserIp)
               {
+                Log::info("crea nuevo user");
                 $ipsuser = new UserIp();
                 $ipsuser->num_historia_clinica = $data[6];
                 $ipsuser->tipo_identificacion = $data[7];
@@ -207,21 +212,25 @@ class AMS {
               }
               
 
+              Log::info("se crea nuevo registro ");
+              Log::info("info this archivo: ".print_r($this->archivo,true));
               //se alamcena la informacion de la relacion registro
               $register = new Registro();
               $register->id_archivo = $this->archivo->id_archivo_seq;
               $register->id_user = $useripsid;
 
-              $eapb  = Eapb::where('num_identificacion', $data[3])
+              $eapb  = Eapb::where('num_identificacion', ltrim($data[3],'0'))
                               ->where('cod_eapb', $data[4])->first();
 
+              Log::info("info eapb ".print_r($eapb,true));
               $register->id_eapb = $eapb->id_entidad;
               $register->save();
 
+              Log::info("se cre anuevo medicamento ");
               //se almacena la información correpondiente al Medicamento suministrado
               $medicamento = new Medicamento();
               $medicamento->id_registro = $register->id_registro_seq;
-              $medicamento->fecha_entrega = $data[15];
+              $medicamento->fecha_entrega = strtotime($data[15]);
               $medicamento->tipo_codificacion = $data[17];
               $medicamento->codigo_medicamento = $data[16];
               $medicamento->catidad = $data[18];
@@ -229,10 +238,11 @@ class AMS {
   
               $medicamento->save();
 
+              array_push($this->success_rows, $data);
+              $this->updateStatusFile($lineCount);
+              $lineCount++;
             }  
           }
-          $this->updateStatusFile($lineCount);
-          $lineCount++;
         }
 
         fclose($this->handle);
@@ -250,6 +260,7 @@ class AMS {
 
   private function updateStatusFile($lineCount)
   {
+    $line = $lineCount;
     //se actualiza el porcentaje
     $register_num = $this->archivo->numero_registros;
     $Porcent =  $this->file_status->porcent;
@@ -261,7 +272,7 @@ class AMS {
 
     $dif = $currentPorcent -  $Porcent;
     if ($dif >= 1){
-      $this->file_status->current_line = $lineCount - 1;
+      $this->file_status->current_line = $line;
       $this->file_status->porcent = intval($currentPorcent);
       $this->file_status->save();
     }
@@ -317,7 +328,7 @@ class AMS {
         
         $zipname = 'detalles'.time().'.zip';
         $zipsavePath = storage_path('archivos').'/../../public/zips/'.$zipname;
-        $this->createZip($this->folder, $zipname);
+        $this->createZip($this->folder, $zipsavePath);
         
         $this->file_status->zipath = asset('zips/'.$zipname);
         $this->file_status->current_status = 'COMPLETED';
@@ -423,7 +434,7 @@ class AMS {
 
     //validacion campo 19
     if(isset($consultSection[18])) {
-        if(!is_int( $consultSection[18])){
+        if(!is_numeric(trim($consultSection[18]))){
           $isValidRow = false;
           array_push($detail_erros, [$lineCount, $lineCountWF, 19, "El campo debe ser un valor entero ".$consultSection[18]]);
         }
