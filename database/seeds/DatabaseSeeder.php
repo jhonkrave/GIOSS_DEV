@@ -33,7 +33,7 @@ class DatabaseSeeder extends Seeder
         $this->call(medicamentosAtcSeeder::class);        
         $this->call(vacunasCupsSeeder::class);
         $this->call(consultasCupsSeeder::class);
-        //$this->call(DBtipoEntidadSeeder::class);medicamentosAtcSeeder
+        $this->call(diagnosticoSeeder::class);
 	    //$this->call(DBconsulta_homologoSeeder::class);
 
 	    Model::reguard();
