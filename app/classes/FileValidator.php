@@ -33,7 +33,6 @@ class FileValidator {
 			if(!$exists){
 				$isValidRow = false;
 				array_push($detail_erros, [1, 0, 1, "NO existe un  código de habilitación para la entidad"]);
-				//$detail_erros[]=[1, 0, 1, "NO existe un  código de habilitación para la entidad"];
 			}
 			
 		}else{
