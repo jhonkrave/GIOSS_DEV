@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Traits;
+namespace App\Classes;
 
 use App\Models\EntidadesSectorSalud;
 use App\Models\TipoEntidad;
@@ -13,7 +13,18 @@ use App\Models\TipoIdentEapb;
 use App\Models\FileStatus;
 use Illuminate\Support\Facades\Log;
 
-trait ToolsForFilesController {
+class FileValidator {
+
+	protected $handle;
+	protected $folder;
+	protected $fileName;
+	protected $version;
+	protected $consecutive;
+	protected $detail_erros;
+	protected $wrong_rows;
+	protected $success_rows;
+	protected $file_status;
+	protected $archivo;
 
 	function validateFirstRow(&$isValidRow, &$detail_erros, $firstRow) {
 
@@ -331,10 +342,103 @@ trait ToolsForFilesController {
 	    $zip->close();
 	}
 
-	public function dropWhiteSpace($array)
+	public function dropWhiteSpace(&$array)
 	{
 		foreach ($array as $field) {
 			$field = trim($field);
+		}
+	}
+
+	protected function updateStatusFile($lineCount)
+	{
+		$line = $lineCount;
+		//se actualiza el porcentaje
+		$register_num = $this->archivo->numero_registros;
+		$Porcent =  $this->file_status->porcent;
+		$currentPorcent = ( ($lineCount - 1)  / $register_num)*100;
+
+		$dif = $currentPorcent -  $Porcent;
+		if ($dif >= 1){
+		  $this->file_status->current_line = $line;
+		  $this->file_status->porcent = intval($currentPorcent);
+		  $this->file_status->save();
+		}
+		return true;
+	}
+
+	protected function generateFiles() 
+	{
+
+		if(count($this->wrong_rows) > 0){
+		  
+		  $filewrongname = $this->folder.'RegistrosErroneos';
+		  //dd('entro');
+		  $wrongfile = fopen($filewrongname, 'w');                              
+		  fprintf($wrongfile, chr(0xEF).chr(0xBB).chr(0xBF)); // darle formato unicode utf-8
+		  foreach ($this->wrong_rows as $row) {
+		      fputcsv($wrongfile, $row,'|');              
+		  }
+		  fclose($wrongfile);
+		  
+		  
+		}
+
+		if(count($this->detail_erros) > 1){
+		  //----se genera el archivo de detalles de error
+		  $detailsFilename =  $this->folder.'DetallesErrores';
+		  
+		  $detailsFileHandler = fopen($detailsFilename, 'w');
+		  fprintf($detailsFileHandler, chr(0xEF).chr(0xBB).chr(0xBF)); // darle formato unicode utf-8
+		  foreach ($this->detail_erros as $row) {
+		      fputcsv($detailsFileHandler, $row,'|');              
+		  }
+		  fclose($detailsFileHandler);
+		}
+
+		if(count($this->success_rows) > 0){
+		    $arrayIdsFilename = $this->folder.'registrosExitosos';
+		    
+		    $arrayIdsFileHandler = fopen($arrayIdsFilename, 'w');
+		    fprintf($arrayIdsFileHandler, chr(0xEF).chr(0xBB).chr(0xBF)); // darle formato unicode utf-8
+		    foreach ($this->success_rows as $row) {
+		        fputcsv($arrayIdsFileHandler, $row, '|');              
+		    }
+		    fclose($arrayIdsFileHandler);
+		    
+
+		    
+		    if(count($this->wrong_rows) > 0){
+		      $this->file_status->final_status = 'REGULAR';
+		      
+		    }else{
+		      $this->file_status->final_status = 'SUCCESS';
+		    }
+		    
+		    $zipname = 'detalles'.time().'.zip';
+		    $zipsavePath = storage_path('archivos').'/../../public/zips/'.$zipname;
+		    $this->createZip($this->folder, $zipsavePath);
+		    
+		    $this->file_status->zipath = asset('zips/'.$zipname);
+		    $this->file_status->current_status = 'COMPLETED';
+		    $this->file_status->save();
+
+		    return true;
+		    
+		}else{
+		    
+		    $this->file_status->final_status = 'FAILURE';
+
+		    
+		    $zipname = 'detalles'.time().'.zip';
+		    $zipsavePath = storage_path('archivos').'/../../public/zips/'.$zipname;
+		    //dd($zipsavePath);
+		    $this->createZip($this->folder, $zipsavePath);
+		    
+		    $this->file_status->zipath = asset('zips/'.$zipname);
+		    $this->file_status->current_status = 'COMPLETED';
+		    $this->file_status->save();
+
+		    return true;
 		}
 	}
 

@@ -2,7 +2,7 @@
 
 namespace App\Classes;
 
-
+use App\Classes\FileValidator;
 use App\Traits\ToolsForFilesController;
 use App\Models\Ambito;
 use App\Models\ConsultaCup;
@@ -22,19 +22,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 
-class AAC {
-
-	use ToolsForFilesController;
-	private $handle;
-	private $folder;
-  private $fileName;
-  private $version;
-  private $consecutive;
-  private $detail_erros;
-  private $wrong_rows;
-  private $success_rows;
-  private $file_status;
-  private $archivo;
+class AAC extends FileValidator {
 
 
 
@@ -258,28 +246,6 @@ class AAC {
 		}
 
   }
-
-  private function updateStatusFile($lineCount)
-  {
-    $line = $lineCount;
-    //se actualiza el porcentaje
-    $register_num = $this->archivo->numero_registros;
-    $Porcent =  $this->file_status->porcent;
-    $currentPorcent = ( ($lineCount - 1)  / $register_num)*100;
-
-    Log::info("Número de registros " . $register_num);
-    Log::info("porcentaje almacenado " . $Porcent);
-    Log::info("porcentaje actual " . $currentPorcent);
-
-    $dif = $currentPorcent -  $Porcent;
-    if ($dif >= 1){
-      $this->file_status->current_line = $line;
-      $this->file_status->porcent = intval($currentPorcent);
-      $this->file_status->save();
-    }
-    return true;
-  }
-
 
   private function validateAAC(&$isValidRow, &$detail_erros, $lineCount, $lineCountWF,$consultSection) {
 
@@ -508,83 +474,5 @@ class AAC {
       array_push($detail_erros, [$lineCount, $lineCountWF, 29, "El campo no debe ser nulo"]);
     }
   }
-
-  private function generateFiles() {
-
-    if(count($this->wrong_rows) > 0){
-      
-      $filewrongname = $this->folder.'RegistrosErroneos';
-      //dd('entro');
-      $wrongfile = fopen($filewrongname, 'w');                              
-      fprintf($wrongfile, chr(0xEF).chr(0xBB).chr(0xBF)); // darle formato unicode utf-8
-      foreach ($this->wrong_rows as $row) {
-          fputcsv($wrongfile, $row,'|');              
-      }
-      fclose($wrongfile);
-      
-      
-    }
-
-    if(count($this->detail_erros) > 1){
-      //----se genera el archivo de detalles de error
-      $detailsFilename =  $this->folder.'DetallesErrores';
-      
-      $detailsFileHandler = fopen($detailsFilename, 'w');
-      fprintf($detailsFileHandler, chr(0xEF).chr(0xBB).chr(0xBF)); // darle formato unicode utf-8
-      foreach ($this->detail_erros as $row) {
-          fputcsv($detailsFileHandler, $row,'|');              
-      }
-      fclose($detailsFileHandler);
-    }
-
-    if(count($this->success_rows) > 0){
-        $arrayIdsFilename = $this->folder.'registrosExitosos';
-        
-        $arrayIdsFileHandler = fopen($arrayIdsFilename, 'w');
-        fprintf($arrayIdsFileHandler, chr(0xEF).chr(0xBB).chr(0xBF)); // darle formato unicode utf-8
-        foreach ($this->success_rows as $row) {
-            fputcsv($arrayIdsFileHandler, $row, '|');              
-        }
-        fclose($arrayIdsFileHandler);
-        
-
-        
-        if(count($this->wrong_rows) > 0){
-          $this->file_status->final_status = 'REGULAR';
-          
-        }else{
-          $this->file_status->final_status = 'SUCCESS';
-        }
-        
-        $zipname = 'detalles'.time().'.zip';
-        $zipsavePath = storage_path('archivos').'/../../public/zips/'.$zipname;
-        $this->createZip($this->folder, $zipsavePath);
-        
-        $this->file_status->zipath = asset('zips/'.$zipname);
-        $this->file_status->current_status = 'COMPLETED';
-        $this->file_status->save();
-
-        return true;
-        
-    }else{
-        
-        $this->file_status->final_status = 'FAILURE';
-
-        
-        $zipname = 'detalles'.time().'.zip';
-        $zipsavePath = storage_path('archivos').'/../../public/zips/'.$zipname;
-        //dd($zipsavePath);
-        $this->createZip($this->folder, $zipsavePath);
-        
-        $this->file_status->zipath = asset('zips/'.$zipname);
-        $this->file_status->current_status = 'COMPLETED';
-        $this->file_status->save();
-
-        return true;
-    }
-
-  }
-
-
 
 }
