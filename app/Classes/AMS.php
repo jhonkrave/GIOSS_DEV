@@ -25,6 +25,8 @@ class AMS extends FileValidator {
 
 
   function __construct($pathfolder, $fileName,$consecutive) {
+    $filePath = $pathfolder.$fileName;
+    $this->countLine($filePath);
     if(!($this->handle = fopen($pathfolder.$fileName, 'r'))) throw new Exception("Error al abrir el archivo AMS");
     //dd($fileName);
     $this->folder = $pathfolder;
@@ -266,7 +268,7 @@ class AMS extends FileValidator {
       $isValidRow = false;
       array_push($detail_erros, [$lineCount, $lineCountWF, 17, "El campo no debe ser nulo"]);
     }
-    Log::info("termino validacion camp 17 ");
+    //Log::info("termino validacion camp 17 ");
 
     //validacion campo 18
      if(isset($consultSection[17])) {

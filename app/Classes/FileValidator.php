@@ -25,9 +25,22 @@ class FileValidator {
 	protected $success_rows;
 	protected $file_status;
 	protected $archivo;
+	protected $totalRegistros;
+
+	protected function countLine($filePath){
+		$handle = null;
+		if(!($handle = fopen($filePath, 'r'))) throw new Exception("Error al abrir el archivo. countline");
+		$lineCount = 0;
+		while (!feof($handle)) {
+			fgets($handle);
+			$lineCount++;
+		}
+		$this->totalRegistros = $lineCount - 1;
+		fclose($handle);
+	}
 
 	function validateFirstRow(&$isValidRow, &$detail_erros, $firstRow) {
-
+		//campo 1
 		if(isset($firstRow[0]) || is_numeric($firstRow[0] )){
 			$exists = EntidadesSectorSalud::where('cod_habilitacion', $firstRow[0])->first();
 			if(!$exists){
@@ -40,7 +53,7 @@ class FileValidator {
 			array_push($detail_erros, [1, 0, 1, "Debe ser un valor numérico no nulo"]);
 		}
 
-		Log::info("termino validacion 1");
+		//Log::info("termino validacion 1");
 
 		if(isset($firstRow[1])){
 			if(!preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])$/", $firstRow[1])){
@@ -54,7 +67,7 @@ class FileValidator {
 		}
 
 		if(isset($firstRow[2])) {
-			if(!preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/", $firstRow[2])){
+			if(!preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/", $firstRow[2])){ //realizar checkdate validaciones entre fechas
 				$isValidRow = false;
 				array_push($detail_erros, [1, 0, 3, "El campo debe tener el formato AAAA-MM-DD"]);	
 				
@@ -85,6 +98,9 @@ class FileValidator {
 		if(!isset($firstRow[4]) || !is_numeric($firstRow[4])){
 			$isValidRow = false;
 			array_push($detail_erros, [1, 0, 5, "Debe ser un valor numérico no nulo"]);
+		}elseif ($this->totalRegistros != $firstRow[4]){
+			$isValidRow = false;
+			array_push($detail_erros, [1, 0, 5, "El valor no coincide con el número de registros del archivo actual: No. registros encontrados = ".$this->totalRegistros." - valor del campo = ".intval($firstRow[4])]);
 		}
 
 		//Log::info('arra datils errors': print_r($detail_erros,true));
@@ -179,9 +195,9 @@ class FileValidator {
 
 		//validacion campo 6
     	if(isset($entitySection[5]) ) {
-    		if(strlen($entitySection[5]) > 100){
+    		if(strlen($entitySection[5]) > 100 || $entitySection[5] != "" ){
     			$isValidRow = false;
-				array_push($detail_erros, [$lineCount, $lineCountWF, 6, "El campo debe terner un logitud igual a 100"]);
+				array_push($detail_erros, [$lineCount, $lineCountWF, 6, "El campo debe terner un logitud igual a 100 y no debe ser vacio."]);
     		}
 		}else{
 			$isValidRow = false;
@@ -343,9 +359,10 @@ class FileValidator {
 
 	public function dropWhiteSpace(&$array)
 	{
-		foreach ($array as $field) {
-			$field = trim($field);
+		foreach ($array as $key => $field) {
+			$array[$key] = trim($field);
 		}
+
 	}
 
 	protected function updateStatusFile($lineCount)

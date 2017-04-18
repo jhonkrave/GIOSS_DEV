@@ -24,6 +24,8 @@ class AVA extends FileValidator {
 
 
   function __construct($pathfolder, $fileName,$consecutive) {
+    $filePath = $pathfolder.$fileName;
+    $this->countLine($filePath);
     if(!($this->handle = fopen($pathfolder.$fileName, 'r'))) throw new Exception("Error al abrir el archivo AEH");
     //dd($fileName);
     $this->folder = $pathfolder;
