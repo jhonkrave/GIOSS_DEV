@@ -34,7 +34,7 @@ class AMS extends FileValidator {
     $this->version = substr($fileNameToken[0],58);
 
     $this->consecutive = $consecutive;
-    $this->detail_erros = array(['No. línea archivo original', 'No. linea en archivo de errores','Campo', 'Detalle']);
+    $this->detail_erros = array(['No. línea archivo original', 'No. linea en archivo de errores','Campo', 'Descripción']);
     $this->wrong_rows =  array();
     $this->success_rows =  array();
     
