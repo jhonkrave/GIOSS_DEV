@@ -14,7 +14,7 @@ set_time_limit(936000);
 ini_set('max_execution_time',936000);
 
 Route::get('/', function () {
-    return view('welcome');
+    return view('auth.login');
 });
 
 Route::get('/quienes', function () {

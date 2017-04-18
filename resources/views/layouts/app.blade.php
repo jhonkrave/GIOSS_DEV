@@ -10,10 +10,14 @@
 
     <title>{{ config('app.name', 'Laravel') }}</title>
 
-    <!-- Styles -->
-    <link href="{{ asset('css/app.css') }}" rel="stylesheet">
-    <!-- Scripts -->
-    <script src="{{ asset('js/app.js') }}"></script>
+    {{ Html::script(asset("js/jquery-3.1.0.min.js")) }}
+        {{ Html::script(asset("css/bootstrap-3.3.7-dist/js/bootstrap.min.js")) }}
+
+        <!-- Styles -->
+        <!-- <link href="{{ asset('css/app.css') }}" rel="stylesheet">  -->
+        {{ Html::style(asset("css/bootstrap-3.3.7-dist/css/bootstrap.min.css")) }}
+        {{ Html::style(asset("css/font-awesome.css")) }}
+        {{ Html::style(asset("css/menu.css")) }}
 
     <!-- Scripts -->
     <script>

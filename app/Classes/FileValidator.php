@@ -389,7 +389,7 @@ class FileValidator {
 		  $detailsFileHandler = fopen($detailsFilename, 'w');
 		  fprintf($detailsFileHandler, chr(0xEF).chr(0xBB).chr(0xBF)); // darle formato unicode utf-8
 		  foreach ($this->detail_erros as $row) {
-		      fputcsv($detailsFileHandler, $row,'|');              
+		      fputcsv($detailsFileHandler, $row,',');              
 		  }
 		  fclose($detailsFileHandler);
 		}

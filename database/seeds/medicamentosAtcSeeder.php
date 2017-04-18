@@ -15,7 +15,7 @@ class medicamentosAtcSeeder extends Seeder
 
     	$header = null;
        	$data = array();
-       	$filename = storage_path('seeders').'/gioss_codigo_medicamentos_atc.csv';
+       	$filename = storage_path('seeders').'/Gioss_codigo_medicamentos_atc.csv';
         if ($handle = fopen($filename,'r'))
         {   
             $count = 1;

@@ -104,9 +104,6 @@
             @if(Request::path() == 'quienes')
                  @include('layouts.quienes_somos')
             @endif
-            @if(Request::path() == 'contactenos')
-                 @include('layouts.contact_form')
-            @endif
             @if(Request::path() == 'resoluciones')
                  @include('layouts.resoluciones')
             @endif

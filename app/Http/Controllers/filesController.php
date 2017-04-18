@@ -59,7 +59,7 @@ class filesController extends Controller
             $rules = array('file' => 'required'); //'required|mimes:png,gif,jpeg,txt,pdf,doc'
             $validator = Validator::make(array('file'=> $file), $rules);
             $validator->validate();
-            $folder = '/'.$consecutive.'/'.$fileTypes[$count].'/';
+            $folder = '/'.$consecutive.'/'.$fileTypes[$count].time().'/';
 
             $routeFolder = storage_path('archivos').$folder;
             $routeFile = $folder.$file->getClientOriginalName();
