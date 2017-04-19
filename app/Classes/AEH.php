@@ -113,6 +113,11 @@ class AEH extends FileValidator {
           $this->validateUserSection($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,6,9,true));
           $this->validateAEH($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,15,13,true));
 
+          if ($isValidRow) // se validan cohenrencia entre fechas
+          { 
+            $this->validateDates($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, $firstRow,$data);
+          }
+
           if(!$isValidRow){
             
             array_push($this->wrong_rows, $data);
@@ -434,5 +439,39 @@ class AEH extends FileValidator {
 
   }
 
+  protected function validateDates(&$isValidRow, &$detail_erros, $lineCount, $lineCountWF,$firstRow ,$data)
+  {
+   
+
+    if (strtotime($firstRow[3]) < strtotime($data[13]) ){
+      $isValidRow = false;
+      array_push($detail_erros, [$lineCount, $lineCountWF, 14, "La fecha de nacimiento (campo 14) debe ser inferior a la fecha final del periodo reportado  (línea 1, campo 4)"]);
+    }
+
+    //se valida que la fecha de nacimiento sa inferior a la Fecha de Ingreso al Servicio de Hospitalización 
+    if (strtotime($data[15]) < strtotime($data[13]) ){
+      $isValidRow = false;
+      array_push($detail_erros, [$lineCount, $lineCountWF, 14, "La fecha de nacimiento (campo 14) debe ser inferior a la Fecha de Ingreso al Servicio de Hospitalización  (campo 16)"]);
+    }
+
+    //se valida que la fecha de nacimiento sa inferior a la Fecha de Egreso al Servicio de Hospitalización 
+    if (strtotime($data[17]) < strtotime($data[13]) ){
+      $isValidRow = false;
+      array_push($detail_erros, [$lineCount, $lineCountWF, 14, "La fecha de nacimiento (campo 14) debe ser inferior a la Fecha de Egreso al Servicio de Hospitalización  (campo 18)"]);
+    }
+
+    //se valida que la fecha de Ingreso esté entre la fecha de los periodos
+    if ( (strtotime($firstRow[2]) > strtotime($data[15])) || (strtotime($firstRow[3]) < strtotime($data[15])) ){
+      $isValidRow = false;
+      array_push($detail_erros, [$lineCount, $lineCountWF, 16, "Fecha de Ingreso al Servicio de Hospitalización  (campo 16) debe estar registrada entre el periodo reportado. fecha incial(línea 1, campo 3) y fecha final (línea 1, campo 4)."]);
+    }
+
+    //se valida que la fecha de Ingreso esté entre la fecha de los periodos
+    if ( (strtotime($firstRow[2]) > strtotime($data[17])) || (strtotime($firstRow[3]) < strtotime($data[17])) ){
+      $isValidRow = false;
+      array_push($detail_erros, [$lineCount, $lineCountWF, 16, "Fecha de Egreso al Servicio de Hospitalización  (campo 18) debe estar registrada entre el periodo reportado. fecha incial(línea 1, campo 3) y fecha final (línea 1, campo 4)."]);
+    }
+
+  }
 
 }

@@ -114,11 +114,14 @@ class AMS extends FileValidator {
 
 
           $this->validateEntitySection($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,0,6));
-          Log::info("valido entidad: ".$lineCount);
           $this->validateUserSection($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,6,9,true));
-          Log::info("valido user: ".$lineCount);
           $this->validateAMS($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,15,5,true));
-          Log::info("valido ams: ".$lineCount);
+
+          if ($isValidRow) // se validan cohenrencia entre fechas
+          { 
+            $this->validateDates($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, $firstRow,$data);
+          }
+          
           if(!$isValidRow){
             Log::info("linea invalida".$lineCount);
             array_push($this->wrong_rows, $data);
@@ -349,6 +352,30 @@ class AMS extends FileValidator {
     }
     Log::info("termino validacion camp 20 ");
 
+
+  }
+
+
+  protected function validateDates(&$isValidRow, &$detail_erros, $lineCount, $lineCountWF,$firstRow ,$data)
+  {
+ 
+
+    if (strtotime($firstRow[3]) < strtotime($data[13]) ){
+      $isValidRow = false;
+      array_push($detail_erros, [$lineCount, $lineCountWF, 14, "La fecha de nacimiento (campo 14) debe ser inferior a la fecha final del periodo reportado  (línea 1, campo 4)"]);
+    }
+
+    //se valida que la fecha de nacimiento sa inferior a la Fecha de Entrega de Medicamento
+    if (strtotime($data[15]) < strtotime($data[13]) ){
+      $isValidRow = false;
+      array_push($detail_erros, [$lineCount, $lineCountWF, 14, "La fecha de nacimiento (campo 14) debe ser inferior a la Fecha de Entrega de Medicamentoa (campo 16)"]);
+    }
+
+    //se valida que la Fecha de Entrega de Medicamento esté entre la fecha de los periodos
+    if ( (strtotime($firstRow[2]) > strtotime($data[15])) || (strtotime($firstRow[3]) < strtotime($data[15])) ){
+      $isValidRow = false;
+      array_push($detail_erros, [$lineCount, $lineCountWF, 16, "La Fecha de Entrega de Medicamento (campo 16) debe estar registrada entre el periodo reportado. fecha incial(línea 1, campo 3) y fecha final (línea 1, campo 4) "]);
+    }
 
   }
 

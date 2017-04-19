@@ -87,7 +87,7 @@ class FileValidator {
 			array_push($detail_erros, [1, 0, 4, "El campo no debe ser nulo"]);
 		}
 
-		if(isset($firstRow[2]) && isset($firstRow[3])){
+		if($isValidRow){
 			if (strtotime($firstRow[2]) > strtotime($firstRow[3]) ){
 				$isValidRow = false;
 				array_push($detail_erros, [1, 0, '3 y 4', "El periodo incial debe ser menor que el periodo final"]);

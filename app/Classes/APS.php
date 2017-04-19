@@ -115,6 +115,11 @@ class APS extends FileValidator {
           $this->validateUserSection($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,6,9,true));
           $this->validateAPS($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,15,7,true));
 
+          if ($isValidRow) // se validan cohenrencia entre fechas
+          { 
+            $this->validateDates($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, $firstRow,$data);
+          }
+
           if(!$isValidRow){
             
             array_push($this->wrong_rows, $data);
@@ -308,7 +313,7 @@ class APS extends FileValidator {
       array_push($detail_erros, [$lineCount, $lineCountWF, 18, "El campo no debe ser nulo"]);
     }
 
-    //validacion campo 19
+    //validacion campo 19 --- duda validar que el codigo campo 17 sea quirurjico
     if(isset($consultSection[18])) {
         
         $exists = DiagnosticoCiex::where('cod_diagnostico',$consultSection[18])->first();
@@ -369,5 +374,27 @@ class APS extends FileValidator {
 
   }
 
+  protected function validateDates(&$isValidRow, &$detail_erros, $lineCount, $lineCountWF,$firstRow ,$data)
+  {
+    //se valida que las fecha de nacimiento sea inferior a las fecha correpondientes a los peiodos
+
+    if (strtotime($firstRow[3]) < strtotime($data[13]) ){
+      $isValidRow = false;
+      array_push($detail_erros, [$lineCount, $lineCountWF, 14, "La fecha de nacimiento (campo 14) debe ser inferior a la fecha final del periodo reportado  (línea 1, campo 4)"]);
+    }
+
+    //se valida que la fecha de nacimiento sa inferior a la Fecha de Realización Procedimiento 
+    if (strtotime($data[15]) < strtotime($data[13]) ){
+      $isValidRow = false;
+      array_push($detail_erros, [$lineCount, $lineCountWF, 14, "La fecha de nacimiento (campo 14) debe ser inferior a la Fecha de Realización Procedimiento  (campo 16)"]);
+    }
+
+    //se valida que la Fecha de Realización Procedimiento  esté entre la fecha de los periodos
+    if ( (strtotime($firstRow[2]) > strtotime($data[15])) || (strtotime($firstRow[3]) < strtotime($data[15])) ){
+      $isValidRow = false;
+      array_push($detail_erros, [$lineCount, $lineCountWF, 16, "La Fecha de Realización Procedimiento  (campo 16) debe estar registrada entre el periodo reportado. fecha incial(línea 1, campo 3) y fecha final (línea 1, campo 4) "]);
+    }
+
+  }
 
 }

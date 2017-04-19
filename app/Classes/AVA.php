@@ -115,6 +115,11 @@ class AVA extends FileValidator {
           $this->validateUserSection($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,6,9,true));
           $this->validateAEH($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,15,14,true));
 
+          if ($isValidRow) // se validan cohenrencia entre fechas
+          { 
+            $this->validateDates($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, $firstRow,$data);
+          }
+
           if(!$isValidRow){
             
             array_push($this->wrong_rows, $data);
@@ -236,7 +241,8 @@ class AVA extends FileValidator {
   }
 
 
-  private function validateAVA(&$isValidRow, &$detail_erros, $lineCount, $lineCountWF,$consultSection) {
+  private function validateAVA(&$isValidRow, &$detail_erros, $lineCount, $lineCountWF,$consultSection) 
+  {
 
     //validacion campo 16
     if(isset($consultSection[15])) {
@@ -304,8 +310,31 @@ class AVA extends FileValidator {
       $isValidRow = false;
       array_push($detail_erros, [$lineCount, $lineCountWF, 19, "El campo no debe ser nulo"]);
     }
-
    
+  }
+
+  protected function validateDates(&$isValidRow, &$detail_erros, $lineCount, $lineCountWF,$firstRow ,$data)
+  {
+    //se valida que las fecha de nacimiento sea inferior a las fecha correpondientes a los peiodos
+    
+
+    if (strtotime($firstRow[3]) < strtotime($data[13]) ){
+      $isValidRow = false;
+      array_push($detail_erros, [$lineCount, $lineCountWF, 14, "La fecha de nacimiento (campo 14) debe ser inferior a la fecha final del periodo reportado  (línea 1, campo 4)"]);
+    }
+
+    //se valida que la fecha de nacimiento sa inferior a la Fecha de la Aplicación de la Dosis de Vacunación 
+    if (strtotime($data[15]) < strtotime($data[13]) ){
+      $isValidRow = false;
+      array_push($detail_erros, [$lineCount, $lineCountWF, 14, "La fecha de nacimiento (campo 14) debe ser inferior a la Fecha de la Aplicación de la Dosis de Vacunación  (campo 16)"]);
+    }
+
+    //se valida que la Fecha de la Aplicación de la Dosis de Vacunación  esté entre la fecha de los periodos
+    if ( (strtotime($firstRow[2]) > strtotime($data[15])) || (strtotime($firstRow[3]) < strtotime($data[15])) ){
+      $isValidRow = false;
+      array_push($detail_erros, [$lineCount, $lineCountWF, 16, "La Fecha de la Aplicación de la Dosis de Vacunación  (campo 16) debe estar registrada entre el periodo reportado. fecha incial(línea 1, campo 3) y fecha final (línea 1, campo 4) "]);
+    }
+
   }
 
 }

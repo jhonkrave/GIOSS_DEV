@@ -119,6 +119,11 @@ class AAC extends FileValidator {
           $this->validateUserSection($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,6,9,true));
           $this->validateAAC($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,15,14,true));
 
+          if ($isValidRow) // se validan cohenrencia entre fechas
+          { 
+            $this->validateDates($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, $firstRow,$data);
+          }
+
           if(!$isValidRow){
             
             array_push($this->wrong_rows, $data);
@@ -371,9 +376,9 @@ class AAC extends FileValidator {
 
     //validacion campo 23
     if(isset($consultSection[22])) {
-        if(strlen($consultSection[22]) > 50 ){
+        if(strlen($consultSection[22]) > 50 || $consultSection[22] == ''){
           $isValidRow = false;
-        array_push($detail_erros, [$lineCount, $lineCountWF, 23, "El campo debe tener una longitud menor o igual a 50 caracteres."]);
+        array_push($detail_erros, [$lineCount, $lineCountWF, 23, "El campo no debe ser vacio y debe tener una longitud menor o igual a 50 caracteres."]);
         }
     }else{
       $isValidRow = false;
@@ -403,10 +408,13 @@ class AAC extends FileValidator {
 
     //validacion campo 25
     if(isset($consultSection[24])) {
-        if(strlen($consultSection[24]) > 50 ){
+      if(strlen(trim($consultSection[23])) != '')
+      {
+        if(strlen($consultSection[24]) > 50 || $consultSection[24] == ''){
           $isValidRow = false;
-        array_push($detail_erros, [$lineCount, $lineCountWF, 25, "El campo debe tener una longitud menor o igual a 50 caracteres."]);
+        array_push($detail_erros, [$lineCount, $lineCountWF, 25, "El campo no debe ser vacio y debe tener una longitud menor o igual a 50 caracteres."]);
         }
+      }
     }else{
       $isValidRow = false;
       array_push($detail_erros, [$lineCount, $lineCountWF, 25, "El campo no debe ser nulo"]);
@@ -434,10 +442,13 @@ class AAC extends FileValidator {
 
     //validacion campo 27
     if(isset($consultSection[26])) {
-        if(strlen($consultSection[26]) > 50 ){
+      if(strlen(trim($consultSection[25])) != '')
+      {
+        if(strlen($consultSection[26]) > 50 || $consultSection[26] == ''){
           $isValidRow = false;
-        array_push($detail_erros, [$lineCount, $lineCountWF, 27, "El campo debe tener una longitud menor o igual a 50 caracteres."]);
+        array_push($detail_erros, [$lineCount, $lineCountWF, 27, "El campo no debe ser vacio y debe tener una longitud menor o igual a 50 caracteres."]);
         }
+      }
     }else{
       $isValidRow = false;
       array_push($detail_erros, [$lineCount, $lineCountWF, 27, "El campo no debe ser nulo"]);
@@ -476,6 +487,28 @@ class AAC extends FileValidator {
       $isValidRow = false;
       array_push($detail_erros, [$lineCount, $lineCountWF, 29, "El campo no debe ser nulo"]);
     }
+  }
+
+  protected function validateDates(&$isValidRow, &$detail_erros, $lineCount, $lineCountWF,$firstRow ,$data)
+  {
+
+    if (strtotime($firstRow[3]) < strtotime($data[13]) ){
+      $isValidRow = false;
+      array_push($detail_erros, [$lineCount, $lineCountWF, 14, "La fecha de nacimiento (campo 14) debe ser inferior a la fecha final del periodo reportado  (línea 1, campo 4)"]);
+    }
+
+    //se valida que la fecha de nacimiento sa inferior a la fecha de consulta
+    if (strtotime($data[15]) < strtotime($data[13]) ){
+      $isValidRow = false;
+      array_push($detail_erros, [$lineCount, $lineCountWF, 14, "La fecha de nacimiento (campo 14) debe ser inferior a la fecha de consulta (campo 16)"]);
+    }
+
+    //se valida que la fecha de consulta esté entre la fecha de los periodos
+    if ( (strtotime($firstRow[2]) > strtotime($data[15])) || (strtotime($firstRow[3]) < strtotime($data[15])) ){
+      $isValidRow = false;
+      array_push($detail_erros, [$lineCount, $lineCountWF, 16, "La fecha de consulta (campo 16) debe estar registrada entre el periodo reportado. fecha incial(línea 1, campo 3) y fecha final (línea 1, campo 4) "]);
+    }
+
   }
 
 }
