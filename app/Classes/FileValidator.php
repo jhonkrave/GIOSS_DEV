@@ -56,9 +56,16 @@ class FileValidator {
 		//Log::info("termino validacion 1");
 
 		if(isset($firstRow[1])){
-			if(!preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])$/", $firstRow[1])){
+			if(preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])$/", $firstRow[1])){
+				$date = explode('-', $firstRow[1]);
+				if(!checkdate($date[1], 01, $date[0])){
+					$isValidRow = false;
+					array_push($detail_erros, [1, 0, 1, "El campo debe corresponder a un fecha válida."]);
+				}
+			}
+			else{
 				$isValidRow = false;
-				array_push($detail_erros, [1, 0, 2, "El campo debe tener el fomato AAAA-MM"]);	
+				array_push($detail_erros, [1, 0, 2, "El campo debe tener el formato AAAA-MM"]);
 			}
 		}else{
 			$isValidRow = false;
@@ -67,10 +74,17 @@ class FileValidator {
 		}
 
 		if(isset($firstRow[2])) {
-			if(!preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/", $firstRow[2])){ //realizar checkdate validaciones entre fechas
+			if(preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/", $firstRow[2])){
+				$date = explode('-', $firstRow[2]);
+				if(!checkdate($date[1], $date[2], $date[0])){
+					$isValidRow = false;
+					array_push($detail_erros, [1, 0, 3, "El campo debe corresponder a un fecha válida."]);
+				}
+			}
+			else
+			{
 				$isValidRow = false;
-				array_push($detail_erros, [1, 0, 3, "El campo debe tener el formato AAAA-MM-DD"]);	
-				
+				array_push($detail_erros, [1, 0, 3, "El campo debe tener el formato AAAA-MM-DD"]);
 			}
 		}else{
 			$isValidRow = false;
@@ -78,9 +92,19 @@ class FileValidator {
 		}
 
 		if(isset($firstRow[3]) ){
-			if(!preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/", $firstRow[2])){
+			if(preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/", $firstRow[3]))
+			{
+				$date = explode('-', $firstRow[3]);
+				if(!checkdate($date[2], $date[1], $date[0]))
+				{
+					$isValidRow = false;
+					array_push($detail_erros, [1, 0, 3, "El campo debe corresponder a un fecha válida."]);
+				}
+			}
+			else
+			{
 				$isValidRow = false;
-				array_push($detail_erros, [1, 0, 4, "El campo debe tener el formato AAAA-MM-DD"]);	
+				array_push($detail_erros, [1, 0, 4, "El campo debe tener el formato AAAA-MM-DD"]);
 			}
 		}else{
 			$isValidRow = false;
@@ -103,7 +127,6 @@ class FileValidator {
 			array_push($detail_erros, [1, 0, 5, "El valor no coincide con el número de registros del archivo actual: No. registros encontrados = ".$this->totalRegistros." - valor del campo = ".intval($firstRow[4])]);
 		}
 
-		//Log::info('arra datils errors': print_r($detail_erros,true));
 
 
 	}
@@ -295,7 +318,15 @@ class FileValidator {
 
 		//validación campo 14
     	if(isset($userSection[13])) {
-    		if(!preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/", $userSection[13])){
+    		if(preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/", $userSection[13])){
+    			$date = explode('-', $userSection[13]);
+				if(!checkdate($date[2], $date[1], $date[0]))
+				{
+					$isValidRow = false;
+					array_push($detail_erros, [$lineCount, $lineCountWF, 14, "El campo debe corresponder a un fecha válida."]);
+				}	
+    		}
+    		else{
     			$isValidRow = false;
 				array_push($detail_erros, [$lineCount, $lineCountWF, 14, "El campo debe terner el formato AAAA-MM-DD"]);
     		}

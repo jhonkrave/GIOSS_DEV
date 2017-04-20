@@ -250,7 +250,14 @@ class AEH extends FileValidator {
 
     //validacion campo 16
     if(isset($consultSection[15])) {
-        if(!preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/", $consultSection[15])){
+        if(preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/", $consultSection[15])){
+          $date = explode('-', $consultSection[15]);
+          if(!checkdate($date[2], $date[1], $date[0])){
+            $isValidRow = false;
+            array_push($detail_erros, [$lineCount, $lineCountWF, 16, "El campo debe corresponder a un fecha válida."]);
+          } 
+        }
+        else{
           $isValidRow = false;
           array_push($detail_erros, [$lineCount, $lineCountWF, 16, "El campo debe terner el formato AAAA-MM-DD"]);
         }
@@ -272,7 +279,13 @@ class AEH extends FileValidator {
 
     //validacion campo 18
     if(isset($consultSection[17])) {
-        if(!preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/", $consultSection[17])){
+        if(preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/", $consultSection[17])){
+          $date = explode('-', $consultSection[17]);
+          if(!checkdate($date[2], $date[1], $date[0])){
+            $isValidRow = false;
+            array_push($detail_erros, [$lineCount, $lineCountWF, 18, "El campo debe corresponder a un fecha válida."]);
+          }   
+        }else{
           $isValidRow = false;
           array_push($detail_erros, [$lineCount, $lineCountWF, 18, "El campo debe terner el formato AAAA-MM-DD"]);
         }
