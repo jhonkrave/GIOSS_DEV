@@ -36,6 +36,6 @@ class Eapbs extends Migration
      */
     public function down()
     {   
-        if(Eapb::count() == 0) Schema::drop('eapbs');
+         Schema::drop('eapbs');
     }
 }
