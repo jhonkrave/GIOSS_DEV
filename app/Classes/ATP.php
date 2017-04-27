@@ -4,22 +4,16 @@ namespace App\Classes;
 
 use App\Classes\FileValidator;
 use App\Traits\ToolsForFilesController;
-use App\Models\Ambito;
-use App\Models\ConsultaCup;
-use App\Models\ConsultaHomologo;
-use App\Models\DiagnosticoCiex;
-use App\Models\TipoDiagnostico;
-use App\Models\FinalidadConsultum;
 use App\Models\FileStatus;
 use App\Models\Archivo;
 use App\Models\UserIp;
 use App\Models\Registro;
 use App\Models\Eapb;
-use App\Models\Consultum;
 use App\Models\EntidadesSectorSalud;
-use App\Models\GiossArchivoAacCfvl;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+
+use App\Models\Ambito;
 
 
 class ATP extends FileValidator {
@@ -259,16 +253,14 @@ class ATP extends FileValidator {
 
     //validacion campo 16
     if(isset($consultSection[15])) {
-        if(preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/", $consultSection[15])){
-          $date = explode('-', $consultSection[15]);
-          if(!checkdate($date[2], $date[1], $date[0])){
-            $isValidRow = false;
-            array_push($detail_erros, [$lineCount, $lineCountWF, 16, "El campo debe corresponder a un fecha válida."]);
-          } 
-        }
-        else{
+        if(strlen($consultSection[15]) != 1){
           $isValidRow = false;
-          array_push($detail_erros, [$lineCount, $lineCountWF, 16, "El campo debe terner el formato AAAA-MM-DD"]);
+          array_push($detail_erros, [$lineCount, $lineCountWF, 16, "El campo de tener una longitud igual a 1"]);
+        }else{
+          $exists = Ambito::where('cod_ambito',$consultSection[15])->first();
+          if(!$exists){
+            array_push($detail_erros, [$lineCount, $lineCountWF, 16, "El valor del campo no correponde a un Ambito valido"]);
+          }
         }
     }else{
       $isValidRow = false;
@@ -279,7 +271,7 @@ class ATP extends FileValidator {
     if(isset($consultSection[16])) {
         if(strlen($consultSection[16]) != 1){
           $isValidRow = false;
-        array_push($detail_erros, [$lineCount, $lineCountWF, 17, "El campo de tener una longitud igual a 1"]);
+          array_push($detail_erros, [$lineCount, $lineCountWF, 17, "El campo de tener una longitud igual a 1"]);
         }else{
           $exists = Ambito::where('cod_ambito',$consultSection[16])->first();
           if(!$exists){
