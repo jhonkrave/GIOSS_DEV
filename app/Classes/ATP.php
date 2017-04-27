@@ -22,14 +22,14 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 
-class AAC extends FileValidator {
+class ATP extends FileValidator {
 
 
 
   function __construct($pathfolder, $fileName,$consecutive) {
     $filePath = $pathfolder.$fileName;
     $this->countLine($filePath);
-    if(!($this->handle = fopen($filePath, 'r'))) throw new Exception("Error al abrir el archivo AAC");
+    if(!($this->handle = fopen($filePath, 'r'))) throw new Exception("Error al abrir el archivo ATP");
     
     //dd($fileName);
     $this->folder = $pathfolder;
@@ -70,7 +70,7 @@ class AAC extends FileValidator {
           $this->archivo->modulo_informacion = 'SGD';
           $this->archivo->nombre = $this->fileName;
           $this->archivo->version = $this->version;
-          $this->archivo->id_tema_informacion = 'AAC';
+          $this->archivo->id_tema_informacion = 'ATP';
           $this->archivo->save();
 
           $fileid = $this->archivo->id_archivo_seq;
@@ -117,7 +117,7 @@ class AAC extends FileValidator {
 
           $this->validateEntitySection($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,0,6));
           $this->validateUserSection($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,6,9,true));
-          $this->validateAAC($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,15,14,true));
+          $this->validateATP($isValidRow, $this->detail_erros, $lineCount, $lineCountWF, array_slice($data,15,14,true));
 
           if ($isValidRow) // se validan cohenrencia entre fechas
           { 
@@ -255,7 +255,7 @@ class AAC extends FileValidator {
 
   }
 
-  private function validateAAC(&$isValidRow, &$detail_erros, $lineCount, $lineCountWF,$consultSection) {
+  private function validateATP(&$isValidRow, &$detail_erros, $lineCount, $lineCountWF,$consultSection) {
 
     //validacion campo 16
     if(isset($consultSection[15])) {
