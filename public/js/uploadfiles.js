@@ -20,8 +20,11 @@ $(document).ready(function(){
 	});
 
 	$('#btnUpload').on('click', function(){
+
 		$('#alert').fadeOut();
 		$('#error_area').empty();
+		$('#add_file').fadeOut();
+		$('#btnUpload').fadeOut();
 		var validatorNames = validateNameFiles();
 		var validatorPeriodo = validatePeriodo();
 
@@ -36,6 +39,8 @@ $(document).ready(function(){
 			}
 			
 			$('#alert').fadeIn();
+			$('#add_file').fadeIn();
+			$('#btnUpload').fadeIn();
 		}else{
 			uploadFile();
 		}
@@ -257,6 +262,8 @@ function consultStatusFiles(consecutive) {
 
 	            	html+= '<div class="row"> <label class="col-md-4">Detalle:</label> <a href="'+msj[x].zipath+'" class="col-md-8">Descargar</a></div>';
 
+	            	$('#add_file').fadeIn();
+					$('#btnUpload').fadeIn();
             	}
             	
             	html+= ' </div>';

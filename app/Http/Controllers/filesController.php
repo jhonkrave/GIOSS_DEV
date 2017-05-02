@@ -9,6 +9,8 @@ use App\Classes\AEH;
 use App\Classes\AMS;
 use App\Classes\AVA;
 use App\Classes\APS;
+use App\Classes\RAD;
+use App\Classes\ATP;
 use App\Models\FileStatus;
 use Illuminate\Support\Facades\DB;
 
@@ -86,6 +88,14 @@ class filesController extends Controller
                         break;
                     case 'AVA':
                         $AVA = new AVA($routeFolder,$fileName, $consecutive);
+                        $AVA->manageContent();
+                        break;
+                    case 'RAD':
+                        $AVA = new RAD($routeFolder,$fileName, $consecutive);
+                        $AVA->manageContent();
+                        break;
+                    case 'ATP':
+                        $AVA = new ATP($routeFolder,$fileName, $consecutive);
                         $AVA->manageContent();
                         break;
                 }
