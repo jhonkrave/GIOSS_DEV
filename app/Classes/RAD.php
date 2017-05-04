@@ -18,6 +18,7 @@ use App\Models\AyudasDiagnosticasPrueba;
 use App\Models\AyudasDiagProcedmientosCup;
 use App\Models\AyudasDiagProcedmientosHomologo;
 use App\Models\AyudasDiagnostica;
+use App\Models\GiossArchivoRadCfvl;
 
 
 
@@ -30,7 +31,7 @@ class RAD extends FileValidator {
     $this->countLine($filePath);
     if(!($this->handle = fopen($filePath, 'r'))) throw new Exception("Error al abrir el archivo RAD");
     
-    //dd($fileName);fg
+    //dd($fileName);
     $this->folder = $pathfolder;
 
     $fileNameToken = explode('.',$fileName);
@@ -132,29 +133,26 @@ class RAD extends FileValidator {
             continue;
           }else{
               
-            // //se valida duplicidad en la informacion
-            // $exists = DB::table('consulta')
-            // ->join('registro', 'consulta.id_registro', '=', 'registro.id_registro_seq')
-            // ->join('archivo', 'registro.id_registro_seq', '=', 'archivo.id_archivo_seq')
-            // ->join('eapbs', 'registro.id_registro_seq', '=', 'eapbs.id_entidad')
-            // ->join('user_ips', 'registro.id_user', '=', 'user_ips.id_user')
-            //   ->where('archivo.fecha_ini_periodo', strtotime($firstRow[2]))
-            //   ->where('archivo.fecha_fin_periodo', strtotime($firstRow[3]))
-            //   ->where('eapbs.num_identificacion', ltrim($data[3],'0'))
-            //   ->where('user_ips.num_identificacion', $data[8])
-            //   ->where('consulta.fecha_consulta', $data[15])
-            //   ->where('consulta.ambito_consulta', $data[16])
-            //   ->where('consulta.tipo_codificacion', $data[18])
-            //   ->where('consulta.cod_consulta', $data[17])
-            //   ->where('consulta.cod_consulta_esp', $data[19])
-            //   ->where('consulta.cod_diagnostico_principal', $data[21])
-            //   ->where('consulta.cod_diagnostico_rel1', $data[23])
-            //   ->where('consulta.cod_diagnostico_rel2', $data[25])
-            //   ->where('consulta.tipo_diagnostico_principal', $data[27])
-            //   ->where('consulta.finalidad_consulta', $data[28])
-            // ->first();
+            //se valida duplicidad en la informacion
+            $exists = DB::table('ayudas_diagnosticas')
+            ->join('registro', 'ayudas_diagnosticas.id_registro', '=', 'registro.id_registro_seq')
+            ->join('archivo', 'registro.id_registro_seq', '=', 'archivo.id_archivo_seq')
+            ->join('eapbs', 'registro.id_registro_seq', '=', 'eapbs.id_entidad')
+            ->join('user_ips', 'registro.id_user', '=', 'user_ips.id_user')
+              ->where('archivo.fecha_ini_periodo', strtotime($firstRow[2]))
+              ->where('archivo.fecha_fin_periodo', strtotime($firstRow[3]))
+              ->where('eapbs.num_identificacion', ltrim($data[3],'0'))
+              ->where('user_ips.num_identificacion', $data[8])
+              ->where('ayudas_diagnosticas.ambito', $data[15])
+              ->where('ayudas_diagnosticas.tipo_prueba', $data[16])
+              ->where('ayudas_diagnosticas.tipo_codificacion', $data[17])
+              ->where('ayudas_diagnosticas.cod_procedimiento', $data[18])
+              ->where('ayudas_diagnosticas.fecha_realizacion',  strtotime($data[20]))
+              ->where('ayudas_diagnosticas.fecha_entrega', strtotime($data[21]))
+              ->where('ayudas_diagnosticas.resultado', $data[22])
+            ->first();
 
-            if(true){
+            if($exists){
               
               array_push($this->detail_erros, [$lineCount, $lineCountWF, '', "Registro duplicado"]);
               array_push($this->wrong_rows, $data);
@@ -165,7 +163,7 @@ class RAD extends FileValidator {
             }else
             {
               //se guarda todo el registro en en la tabla soporte
-                $tabla = new GiossArchivoAacCfvl();
+                $tabla = new GiossArchivoRadCfvl();
                 $tabla->fecha_periodo_inicio = $this->archivo->fecha_ini_periodo;
                 $tabla->fecha_periodo_fin = $this->archivo->fecha_fin_periodo;
                 $tabla->nombre_archivo = $this->fileName;;
@@ -224,8 +222,8 @@ class RAD extends FileValidator {
               $consult->tipo_prueba = $data[16];
               $consult->tipo_codificacion = $data[17];
               $consult->cod_procedimiento = $data[18];
-              $consult->fecha_realizacion = $data[20];
-              $consult->fecha_entrega = $data[21];
+              $consult->fecha_realizacion = strtotime($data[20]);
+              $consult->fecha_entrega = strtotime($data[21]);
               $consult->resultado = $data[22];
 
               $consult->save();
