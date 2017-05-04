@@ -30,7 +30,7 @@ class RAD extends FileValidator {
     $this->countLine($filePath);
     if(!($this->handle = fopen($filePath, 'r'))) throw new Exception("Error al abrir el archivo RAD");
     
-    //dd($fileName);
+    //dd($fileName);fg
     $this->folder = $pathfolder;
 
     $fileNameToken = explode('.',$fileName);
