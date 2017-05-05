@@ -55,7 +55,7 @@ function validatePeriodo(){
 	var detalle = '<hr><hr><strong>Error en el periodo a reportar</strong><br>';
 	var startDt=$('#fecha_ini').val();
 	var endDt=$('#fecha_fin').val();
-	console.log(startDt);
+	
 	if(startDt == "" ){
 		 isValid = false;
 		detalle += '<p>- Por favor selecciona una fecha inicio de periodo valida.</p>';
@@ -153,27 +153,27 @@ function validateNameFiles(){
 
 			
 
-			// var dateini = fecha_ini.substring(0,4)+'-'+fecha_ini.substring(4,6)+'-'+fecha_ini.substring(6);
-			// var datefin = fecha_fin.substring(0,4)+'-'+fecha_fin.substring(4,6)+'-'+fecha_fin.substring(6);
-			// var mesr = MesRepor.substring(0,4)+'-'+MesRepor.substring(4,6)+'-01';
-			// console.log(dateini);
-			// console.log(datefin);
-			// console.log(mesr);
+			var dateini = fecha_ini.substring(0,4)+'-'+fecha_ini.substring(4,6)+'-'+fecha_ini.substring(6);
+			var datefin = fecha_fin.substring(0,4)+'-'+fecha_fin.substring(4,6)+'-'+fecha_fin.substring(6);
+			var mesr = MesRepor.substring(0,4)+'-'+MesRepor.substring(4,6)+'-01';
+			console.log(dateini);
+			console.log(datefin);
+			console.log(mesr);
 
-			// var startDt=$('#fecha_ini').val();
-			// var endDt=$('#fecha_fin').val();
+			var startDt=$('#fecha_ini').val();
+			var endDt=$('#fecha_fin').val();
 
-			// if(startDt != dateini)
-			// {
-			//      isValid = false;
-			// 	 mnj += '<p>- El periodo incial debe ser equivalente con el periodo inial del archivo reportado</p>';
-			// }
+			if(startDt != dateini)
+			{
+			     isValid = false;
+				 mnj += '<p>- El periodo incial debe ser equivalente al periodo inicial de la sección nombre del archivo reportado</p>';
+			}
 
-			// if(endDt != datefin)
-			// {
-			//     isValid = false;
-			// 	 mnj += '<p>- El periodo final debe ser equivalente con el periodo final del archivo reportado</p></p>';
-			// }
+			if(endDt != datefin)
+			{
+			    isValid = false;
+				 mnj += '<p>- El periodo final debe ser equivalente con el periodo final de la sección nombre del archivo reportado</p></p>';
+			}
 
 			if(!isValid){
 				mnj = '<hr>Error en el archivo <strong>'+ label+'</strong>:<br>'+mnj;

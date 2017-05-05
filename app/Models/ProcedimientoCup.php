@@ -16,7 +16,14 @@ class ProcedimientoCup extends Model
 	public $timestamps = false;
 
     protected $fillable = [
-        'descripcion'
+        'descripcion',
+        'cod_sis_cups',
+        'descrip_sis_cups',
+        'cod_grup_cups',
+        'desc_grup_cups',
+        'ambito_cups',
+        'sexo_cups',
+        'nivel_atencion'
     ];
 
     protected $guarded = [];

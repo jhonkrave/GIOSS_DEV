@@ -122,7 +122,7 @@ class FileValidator {
 		if(!isset($firstRow[4]) || !is_numeric($firstRow[4])){
 			$isValidRow = false;
 			array_push($detail_erros, [1, 0, 5, "Debe ser un valor numérico no nulo"]);
-		}elseif ($this->totalRegistros != $firstRow[4]){
+		}elseif ($this->totalRegistros != intval($firstRow[4])) {
 			$isValidRow = false;
 			array_push($detail_erros, [1, 0, 5, "El valor no coincide con el número de registros del archivo actual: No. registros encontrados = ".$this->totalRegistros." - valor del campo = ".intval($firstRow[4])]);
 		}

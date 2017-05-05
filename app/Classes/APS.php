@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Log;
 
 use App\Models\DiagnosticoCiex;
 use App\Models\ProcedimientoCup;
-use App\Models\ProcedimientoHomologo;
+use App\Models\HomologosCupsCodigo;
 use App\Models\ProcedimientosQNq;
 use App\Models\GiossArchivoApsCfvl;
 
@@ -255,7 +255,7 @@ class APS extends FileValidator {
 
   }
 
-  private function validateAPS(&$isValidRow, &$detail_erros, $lineCount, $lineCountWF,$consultSection) {
+  private function validateAPS(&$isValidRow, &$detail_erros, $lineCount, $lineCountWF,&$consultSection) {
 
     //validacion campo 16
     if(isset($consultSection[15])) {
@@ -298,14 +298,24 @@ class APS extends FileValidator {
             if(!$exists){
               $isValidRow = false;
               array_push($detail_erros, [$lineCount, $lineCountWF, 17, "El valor del campo no correspondea un codigo de procedimiento cups válido"]);
+            }else{
+              $exists = HomologosCupsCodigo::where('cod_homologo',$consultSection[16])->first();
+              if(!$exists){
+                $isValidRow = false;
+                array_push($detail_erros, [$lineCount, $lineCountWF, 17, "El valor del campo no correspondea a un codigo de procedimiento homologo válido"]);
+              }else{
+                $consultSection[16] = $exists->cod_cups;
+              }
             }
             break;
 
           case '4':
-            $exists = ProcedimientoHomologo::where('cod_procedimiento',$consultSection[16])->first();
+            $exists = HomologosCupsCodigo::where('cod_homologo',$consultSection[16])->first();
             if(!$exists){
               $isValidRow = false;
               array_push($detail_erros, [$lineCount, $lineCountWF, 17, "El valor del campo no correspondea a un codigo de procedimiento homologo válido"]);
+            }else{
+              $consultSection[16] = $exists->cod_cups;
             }
             break;
 
@@ -321,14 +331,26 @@ class APS extends FileValidator {
       array_push($detail_erros, [$lineCount, $lineCountWF, 18, "El campo no debe ser nulo"]);
     }
 
-    //validacion campo 19 --- duda validar que el codigo campo 17 sea quirurjico
+    //se valida que el procedimiento campo 17 sea quirurjico
+    $esQuirurjico = ProcedimientoCup::where('cod_procedimiento',$consultSection[16])
+                                      where('cod_grup_cups',11) // codigo 11 corresponde a procedimientos quirurjicos
+                                        ->first();
+
+    //validacion campo 19 ---
+    $diagPrinConfirm = false;
     if(isset($consultSection[18])) {
+
         
-        $exists = DiagnosticoCiex::where('cod_diagnostico',$consultSection[18])->first();
-        if(!$exists){
-          $isValidRow = false;
-          array_push($detail_erros, [$lineCount, $lineCountWF, 19, "El valor no corresponde a un valor código de diagnóstico valido"]);
+
+        if($esQuirurjico){
+          $exists = DiagnosticoCiex::where('cod_diagnostico',$consultSection[18])->first();
+          if(!$exists){
+            $diagPrinConfirm = true;
+            $isValidRow = false;
+            array_push($detail_erros, [$lineCount, $lineCountWF, 19, "El valor no corresponde a un valor código de diagnóstico valido"]);
+          }
         }
+        
         
     }else{
       $isValidRow = false;
@@ -337,11 +359,13 @@ class APS extends FileValidator {
 
     //validacion campo 20
     if(isset($consultSection[19])) {
-        
-        if(strlen($consultSection[19]) > 50 ){
-          $isValidRow = false;
-        array_push($detail_erros, [$lineCount, $lineCountWF, 20, "El campo  debe tener una longitud menor o igual a 50"]);
+        if($esQuirurjico){
+          if(strlen($consultSection[19]) > 50 ){
+            $isValidRow = false;
+          array_push($detail_erros, [$lineCount, $lineCountWF, 20, "El campo  debe tener una longitud menor o igual a 50"]);
+          }
         }
+        
     }else{
       $isValidRow = false;
       array_push($detail_erros, [$lineCount, $lineCountWF, 20, "El campo no debe ser nulo"]);
@@ -349,7 +373,7 @@ class APS extends FileValidator {
 
     //validación campo 21
     if(isset($consultSection[20])) {
-        if(strlen($consultSection[18]) != ''){
+        if($diagPrinConfirm){ //diagnostico principal confirmado
           $exists = DiagnosticoCiex::where('cod_diagnostico',$consultSection[20])->first();
           if(!$exists){
             $isValidRow = false;

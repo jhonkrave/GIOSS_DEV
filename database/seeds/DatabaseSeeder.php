@@ -34,7 +34,9 @@ class DatabaseSeeder extends Seeder
         $this->call(vacunasCupsSeeder::class);
         $this->call(consultasCupsSeeder::class);
         $this->call(diagnosticoSeeder::class);
-	    //$this->call(DBconsulta_homologoSeeder::class);
+	    $this->call(procedimientosSeeder::class);
+        $this->call(homologosCupsSeeder::class);
+        $this->call(topsPruebasSeeder::class);
 
 	    Model::reguard();
     }

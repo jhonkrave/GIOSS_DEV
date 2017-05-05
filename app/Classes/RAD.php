@@ -15,8 +15,8 @@ use Illuminate\Support\Facades\Log;
 
 use App\Models\Ambito;
 use App\Models\AyudasDiagnosticasPrueba;
-use App\Models\AyudasDiagProcedmientosCup;
-use App\Models\AyudasDiagProcedmientosHomologo;
+use App\Models\ProcedimientoCup;
+use App\Models\HomologosCupsCodigo;
 use App\Models\AyudasDiagnostica;
 use App\Models\GiossArchivoRadCfvl;
 
@@ -249,7 +249,7 @@ class RAD extends FileValidator {
 
   }
 
-  private function validateRAD(&$isValidRow, &$detail_erros, $lineCount, $lineCountWF,$consultSection) {
+  private function validateRAD(&$isValidRow, &$detail_erros, $lineCount, $lineCountWF,&$consultSection) {
 
     //validacion campo 16
     if(isset($consultSection[15])) {
@@ -300,18 +300,36 @@ class RAD extends FileValidator {
     if(isset($consultSection[17])) {
       switch ($consultSection[17]) {
         case '1':
-          $exists = AyudasDiagProcedmientosCup::where('cod_procedimiento',intval($consultSection[17]))->first();
+          $exists = ProcedimientoCup::where('cod_procedimiento',intval($consultSection[17]))
+                                      ->where(function ($query) { //codigos de grupos correpondientes a ayudas diagnosticas
+                                                  $query->where('cod_grup_cups', 6)
+                                                        ->orWhere('cod_grup_cups', 7)
+                                                        ->orWhere('cod_grup_cups', 8)
+                                                        ->orWhere('cod_grup_cups', 9)
+                                                        ->orWhere('cod_grup_cups', 10);
+                                              })
+                                        ->first();
           if(!$exists){
             $isValidRow = false;
             array_push($detail_erros, [$lineCount, $lineCountWF, 18, "El valor del campo no correspondea un codigo de procedimieto cups de ayudas diagnosticas válido"]);
+          }else{
+            $exists = HomologosCupsCodigo::where('cod_procedimiento',$consultSection[17])->first();
+            if(!$exists){
+              $isValidRow = false;
+              array_push($detail_erros, [$lineCount, $lineCountWF, 18, "El valor del campo no correspondea un codigo de procedimieto ni cups ni homólogo de ayudas diagnosticas válido"]);
+            }else{
+              $consultSection[17] = $exists->cod_cups;
+            }
           }
           break;
         
         case '4':
-          $exists = AyudasDiagProcedmientosHomologo::where('cod_procedimiento',$consultSection[17])->first();
+          $exists = HomologosCupsCodigo::where('cod_procedimiento',$consultSection[17])->first();
           if(!$exists){
             $isValidRow = false;
             array_push($detail_erros, [$lineCount, $lineCountWF, 18, "El valor del campo no correspondea un codigo de procedimieto homólogo de ayudas diagnosticas válido"]);
+          }else{
+            $consultSection[17] = $exists->cod_cups;
           }
           break;
 

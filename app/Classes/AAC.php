@@ -6,7 +6,7 @@ use App\Classes\FileValidator;
 use App\Traits\ToolsForFilesController;
 use App\Models\Ambito;
 use App\Models\ConsultaCup;
-use App\Models\ConsultaHomologo;
+use App\Models\HomologosCupsCodigo;
 use App\Models\DiagnosticoCiex;
 use App\Models\TipoDiagnostico;
 use App\Models\FinalidadConsultum;
@@ -255,7 +255,7 @@ class AAC extends FileValidator {
 
   }
 
-  private function validateAAC(&$isValidRow, &$detail_erros, $lineCount, $lineCountWF,$consultSection) {
+  private function validateAAC(&$isValidRow, &$detail_erros, $lineCount, $lineCountWF,&$consultSection) {
 
     //validacion campo 16
     if(isset($consultSection[15])) {
@@ -313,7 +313,7 @@ class AAC extends FileValidator {
       array_push($detail_erros, [$lineCount, $lineCountWF, 20, "El campo no debe ser nulo"]);
     }
 
-    //validacion campo 18(2), 19(3) y 20(4)
+    //validacion campo 18, 19 y 20
     if(isset($consultSection[18])) {
         if(!is_numeric($consultSection[18]) || strlen($consultSection[18]) != 1){
           $isValidRow = false;
@@ -325,14 +325,24 @@ class AAC extends FileValidator {
               if(!$exists){
                 $isValidRow = false;
                 array_push($detail_erros, [$lineCount, $lineCountWF, 18, "El valor del campo no correspondea un codigo de consutlas cups válido"]);
+              }else{
+                $exists = HomologosCupsCodigo::where('cod_homologo',$consultSection[17])->first();
+                if(!$exists){
+                  $isValidRow = false;
+                  array_push($detail_erros, [$lineCount, $lineCountWF, 20, "El valor del campo no corresponde a un codigo de consutla ni cups ni homologo  válido"]);
+                }else{
+                  $consultSection[19] = $exists->cod_cups;
+                }
               }
               break;
             
             case '4':
-              $exists = ConsultaHomologo::where('cod_consulta',$consultSection[19])->first();
+              $exists = HomologosCupsCodigo::where('cod_homologo',$consultSection[19])->first();
               if(!$exists){
                 $isValidRow = false;
-                array_push($detail_erros, [$lineCount, $lineCountWF, 20, "El valor del campo no corresponde a un codigo de consutla especializado válido válido"]);
+                array_push($detail_erros, [$lineCount, $lineCountWF, 20, "El valor del campo no corresponde a un codigo de consutla homologo  válido"]);
+              }else{
+                $consultSection[19] = $exists->cod_cups;
               }
               break;
 

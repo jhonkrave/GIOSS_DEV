@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Log;
 
 use App\Models\Vacunacion;
 use App\Models\VacunaCup;
-use App\Models\VacunaHomologo;
+use App\Models\HomologosCupsCodigo;
 use App\Models\GiossArchivoAvaCfvl;
 
 
@@ -285,14 +285,24 @@ class AVA extends FileValidator {
               if(!$exists){
                 $isValidRow = false;
                 array_push($detail_erros, [$lineCount, $lineCountWF, 17, "El valor del campo no correspondea un codigo de vacuna cups válido"]);
+              }else{
+                $exists = HomologosCupsCodigo::where('cod_homologo',$consultSection[16])->first();
+                if(!$exists){
+                  $isValidRow = false;
+                  array_push($detail_erros, [$lineCount, $lineCountWF, 17, "El valor del campo no corresponde a un codigo de vacuna ni cups ni homologo válida"]);
+                }else{
+                  $consultSection[16] = $exists->cod_cups; 
+                }
               }
               break;
             
             case '4':
-              $exists = VacunaHomologo::where('codigo_tipo_vacuna',$consultSection[16])->first();
+              $exists = HomologosCupsCodigo::where('cod_homologo',$consultSection[16])->first();
               if(!$exists){
                 $isValidRow = false;
                 array_push($detail_erros, [$lineCount, $lineCountWF, 17, "El valor del campo no corresponde a un codigo de vacuna homologa válida"]);
+              }else{
+                $consultSection[16] = $exists->cod_cups; 
               }
               break;
           }
