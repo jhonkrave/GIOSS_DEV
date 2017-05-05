@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Log;
 
 use App\Models\Ambito;
 use App\Models\PesoTallaTension;
+use App\Models\GiossArchivoAtpCfvl;
 
 
 class ATP extends FileValidator {
@@ -159,7 +160,7 @@ class ATP extends FileValidator {
             }else
             {
               //se guarda todo el registro en en la tabla soporte
-                $tabla = new GiossArchivoAacCfvl();
+                $tabla = new GiossArchivoAtpCfvl();
                 $tabla->fecha_periodo_inicio = $this->archivo->fecha_ini_periodo;
                 $tabla->fecha_periodo_fin = $this->archivo->fecha_fin_periodo;
                 $tabla->nombre_archivo = $this->fileName;;
