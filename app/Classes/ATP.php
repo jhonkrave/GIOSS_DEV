@@ -129,28 +129,26 @@ class ATP extends FileValidator {
           }else{
               
             //se valida duplicidad en la informacion
-            // $exists = DB::table('consulta')
-            // ->join('registro', 'consulta.id_registro', '=', 'registro.id_registro_seq')
-            // ->join('archivo', 'registro.id_registro_seq', '=', 'archivo.id_archivo_seq')
-            // ->join('eapbs', 'registro.id_registro_seq', '=', 'eapbs.id_entidad')
-            // ->join('user_ips', 'registro.id_user', '=', 'user_ips.id_user')
-            //   ->where('archivo.fecha_ini_periodo', strtotime($firstRow[2]))
-            //   ->where('archivo.fecha_fin_periodo', strtotime($firstRow[3]))
-            //   ->where('eapbs.num_identificacion', ltrim($data[3],'0'))
-            //   ->where('user_ips.num_identificacion', $data[8])
-            //   ->where('consulta.fecha_consulta', $data[15])
-            //   ->where('consulta.ambito_consulta', $data[16])
-            //   ->where('consulta.tipo_codificacion', $data[18])
-            //   ->where('consulta.cod_consulta', $data[17])
-            //   ->where('consulta.cod_consulta_esp', $data[19])
-            //   ->where('consulta.cod_diagnostico_principal', $data[21])
-            //   ->where('consulta.cod_diagnostico_rel1', $data[23])
-            //   ->where('consulta.cod_diagnostico_rel2', $data[25])
-            //   ->where('consulta.tipo_diagnostico_principal', $data[27])
-            //   ->where('consulta.finalidad_consulta', $data[28])
-            // ->first();
+            $exists = DB::table('peso_talla_tension')
+            ->join('registro', 'peso_talla_tension.id_registro', '=', 'registro.id_registro_seq')
+            ->join('archivo', 'registro.id_registro_seq', '=', 'archivo.id_archivo_seq')
+            ->join('eapbs', 'registro.id_registro_seq', '=', 'eapbs.id_entidad')
+            ->join('user_ips', 'registro.id_user', '=', 'user_ips.id_user')
+              ->where('archivo.fecha_ini_periodo', strtotime($firstRow[2]))
+              ->where('archivo.fecha_fin_periodo', strtotime($firstRow[3]))
+              ->where('eapbs.num_identificacion', ltrim($data[3],'0'))
+              ->where('user_ips.num_identificacion', $data[8])
+              ->where('peso_talla_tension.ambito', $data[15])
+              ->where('peso_talla_tension.fecha_med_peso', strtotime($data[16]))
+              ->where('peso_talla_tension.valor_peso', $data[17])
+              ->where('peso_talla_tension.fecha_med_talla', strtotime($data[18]))
+              ->where('peso_talla_tension.valor_talla', $data[19])
+              ->where('peso_talla_tension.fecha_med_tension',strtotime($data[20]))
+              ->where('peso_talla_tension.valor_tension_sistolica', $data[21])
+              ->where('peso_talla_tension.valor_tension_diastolica', $data[22])
+            ->first();
 
-            if(true){
+            if($exists){
               
               array_push($this->detail_erros, [$lineCount, $lineCountWF, '', "Registro duplicado"]);
               array_push($this->wrong_rows, $data);
